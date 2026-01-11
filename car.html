@@ -3,96 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>현대·기아 영업 장부 PRO</title>
+    <title>현대·기아 영업 통합 매니저</title>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <style>
-        :root { --hyundai: #002c5f; --kia: #ea0029; --accent: #0076c0; --success: #28a745; --danger: #dc3545; }
-        body { font-family: 'Pretendard', -apple-system, sans-serif; padding: 10px; background: #f2f4f7; color: #333; margin: 0; padding-bottom: 30px; }
-        .container { max-width: 500px; margin: auto; }
+        :root { --hyundai: #002c5f; --kia: #ea0029; --accent: #0076c0; --success: #28a745; --danger: #dc3545; --gray: #666; }
+        body { font-family: 'Pretendard', -apple-system, sans-serif; padding: 0; background: #f2f4f7; color: #333; margin: 0; }
+        .container { max-width: 500px; margin: auto; padding: 15px; }
+       
+        /* 네비게이션 탭 */
+        .nav-tab { display: flex; background: white; border-radius: 15px; margin-bottom: 15px; padding: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .nav-btn { flex: 1; padding: 12px; border: none; background: none; font-weight: bold; border-radius: 10px; cursor: pointer; color: #999; }
+        .nav-btn.active { background: var(--hyundai); color: white; }
+
         .card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        h2 { color: var(--hyundai); font-size: 1.1em; margin-top: 0; border-left: 4px solid var(--hyundai); padding-left: 10px; display: flex; justify-content: space-between; align-items: center; }
+        h2 { color: var(--hyundai); font-size: 1.1em; margin-top: 0; border-left: 4px solid var(--hyundai); padding-left: 10px; }
+       
+        label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.8em; color: var(--gray); }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; margin-bottom: 10px; font-family: inherit; }
+        .btn-main { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
        
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .stat-box { background: var(--hyundai); color: white; padding: 12px; border-radius: 10px; text-align: center; }
-        .stat-label { font-size: 0.7em; opacity: 0.8; }
-        .stat-value { font-size: 1.1em; font-weight: 800; margin-top: 3px; }
+        .stat-value { font-size: 1.1em; font-weight: 800; }
 
-        .brand-tab { display: flex; gap: 8px; margin-bottom: 12px; }
-        .tab-btn { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-weight: bold; font-size: 0.9em; }
-        .tab-btn.active.hyundai { background: var(--hyundai); color: white; border-color: var(--hyundai); }
-        .tab-btn.active.kia { background: var(--kia); color: white; border-color: var(--kia); }
-
-        label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.8em; color: #666; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; margin-bottom: 10px; }
+        /* 리스트 아이템 */
+        .item { padding: 12px 0; border-bottom: 1px solid #eee; cursor: pointer; }
+        .badge { font-size: 0.7em; padding: 2px 5px; border-radius: 4px; color: white; margin-right: 5px; }
+        .st-진행중 { background: #ff9800; } .st-계약 { background: var(--success); } .st-실패 { background: var(--danger); }
        
-        .btn-save { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        /* 상세 내용 토글 영역 */
+        .detail-view { background: #f9f9f9; padding: 10px; border-radius: 8px; margin-top: 5px; font-size: 0.85em; display: none; border: 1px solid #eee; }
+        .detail-view.active { display: block; }
+        .detail-label { color: var(--accent); font-weight: bold; margin-right: 5px; }
 
         .history-list { max-height: 400px; overflow-y: auto; }
-        .history-item { padding: 12px 0; border-bottom: 1px solid #eee; font-size: 0.85em; }
-        .item-main { display: flex; justify-content: space-between; align-items: flex-start; }
-        .customer-name { font-size: 1.05em; color: var(--hyundai); font-weight: 800; margin-bottom: 2px; }
-        .item-details { font-size: 0.8em; color: #777; margin-top: 4px; display: flex; flex-wrap: wrap; gap: 8px; }
-        .brand-badge { font-size: 0.7em; padding: 1px 4px; border-radius: 3px; color: white; margin-right: 4px; vertical-align: middle; }
-        .bg-h { background: var(--hyundai); }
-        .bg-k { background: var(--kia); }
-        .val-plus { color: var(--success); font-weight: bold; }
-        .val-minus { color: var(--danger); font-weight: bold; }
-        .btn-delete { color: #ccc; border: none; background: none; cursor: pointer; font-size: 1.1em; padding: 0 5px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="card">
-        <h2>실적 리포트 <select id="viewMonth" class="month-selector" onchange="render()"></select></h2>
-        <div id="chart_div" style="width:100%; height:140px; background:#f9f9f9; border-radius:10px;"></div>
-        <div class="dashboard">
-            <div class="stat-box"><div class="stat-label">판매 대수</div><div class="stat-value"><span id="totalCount">0</span> 대</div></div>
-            <div class="stat-box" style="background: var(--success);"><div class="stat-label">이달의 합계 수익</div><div class="stat-value"><span id="totalIncome">0</span> 원</div></div>
-        </div>
+    <div class="nav-tab">
+        <button id="navConsult" class="nav-btn active" onclick="showTab('consult')">상담 관리</button>
+        <button id="navSales" class="nav-btn" onclick="showTab('sales')">실적/장부</button>
     </div>
 
-    <div class="card">
-        <h2>판매 및 지출 등록</h2>
-        <div class="brand-tab">
-            <button id="btnH" class="tab-btn active hyundai" onclick="setBrand('H')">현대</button>
-            <button id="btnK" class="tab-btn" onclick="setBrand('K')">기아</button>
-        </div>
-
-        <label>고객명</label>
-        <input type="text" id="customerName" placeholder="예: 홍길동 (그랜저)" style="border-color: var(--accent);">
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div>
-                <label>차종</label>
-                <select id="carModel" onchange="autoCalculate()"></select>
+    <div id="tabConsult">
+        <div class="card">
+            <h2>상담 등록</h2>
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <button id="cBtnH" class="nav-btn active" style="border:1px solid #ddd" onclick="setBrand('H')">현대</button>
+                <button id="cBtnK" class="nav-btn" style="border:1px solid #ddd" onclick="setBrand('K')">기아</button>
             </div>
-            <div>
-                <label>차량 가격 (원)</label>
-                <input type="number" id="carPrice" placeholder="정가 입력" oninput="autoCalculate()">
-            </div>
-        </div>
-
-        <div id="kiaOption" style="display:none;">
-            <label>기아 수당 비율</label>
-            <select id="kiaRatio" onchange="autoCalculate()">
-                <option value="0.8">80% 적용</option>
-                <option value="0.9">90% 적용</option>
+            <input type="text" id="cName" placeholder="고객명">
+            <input type="date" id="cDate">
+            <input type="text" id="cModel" placeholder="차종 (예: 그랜저)">
+            <label>상담 결과</label>
+            <select id="cStatus">
+                <option value="진행중">진행중</option>
+                <option value="계약">계약</option>
+                <option value="실패">실패</option>
             </select>
+            <textarea id="cNote" placeholder="특이사항" rows="2"></textarea>
+            <textarea id="cService" placeholder="서비스 내용" rows="2"></textarea>
+            <button class="btn-main" onclick="saveConsult()">상담 내역 저장</button>
         </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-            <div><label>계산수당</label><input type="number" id="calcIncome"></div>
-            <div><label>기타수입(+)</label><input type="number" id="extraIncome" value="0"></div>
-            <div><label>영업비(-)</label><input type="number" id="expense" value="0"></div>
+        <div class="card">
+            <h2>상담 현황 (이번 달 <span id="consultMonthTotal">0</span>건)</h2>
+            <div id="consultList" class="history-list"></div>
         </div>
-
-        <button id="saveBtn" class="btn-save" onclick="saveRecord()">장부 기록하기</button>
     </div>
 
-    <div class="card">
-        <h2>판매 상세 내역</h2>
-        <div id="historyList" class="history-list"></div>
+    <div id="tabSales" class="hidden">
+        <div class="card">
+            <h2>실적 리포트 <select id="viewMonth" onchange="renderSales()"></select></h2>
+            <div id="chart_div" style="width:100%; height:140px;"></div>
+            <div class="dashboard">
+                <div class="stat-box"><div>판매 대수</div><div class="stat-value"><span id="totalCount">0</span>대</div></div>
+                <div class="stat-box" style="background: var(--success);"><div>합계 수익</div><div class="stat-value"><span id="totalIncome">0</span>원</div></div>
+            </div>
+        </div>
+        <div class="card" id="salesInputArea">
+            <h2 id="salesInputTitle">실적 등록</h2>
+            <input type="text" id="sName" placeholder="고객명">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <select id="sModel" onchange="autoCalcSales()"></select>
+                <input type="number" id="sPrice" placeholder="차량가" oninput="autoCalcSales()">
+            </div>
+            <div id="sKiaRatioArea" class="hidden">
+                <label>기아 수당 비율</label>
+                <select id="sKiaRatio" onchange="autoCalcSales()">
+                    <option value="0.8">80%</option>
+                    <option value="0.9">90%</option>
+                </select>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+                <div><label>수당</label><input type="number" id="sCalc"></div>
+                <div><label>기타(+)</label><input type="number" id="sExtra" value="0"></div>
+                <div><label>영업비(-)</label><input type="number" id="sExp" value="0"></div>
+            </div>
+            <input type="hidden" id="sLinkedNote">
+            <input type="hidden" id="sLinkedService">
+            <button class="btn-main" onclick="saveSalesRecord()">실적 저장하기</button>
+        </div>
+        <div class="card">
+            <h2>계약 고객 리스트 (클릭 시 상세정보)</h2>
+            <div id="salesList" class="history-list"></div>
+        </div>
     </div>
 </div>
 
@@ -102,132 +119,210 @@
     const kiaModels = [{n:'모닝', r:0.075}, {n:'레이', r:0.075}, {n:'K3', r:0.07}, {n:'K5', r:0.06}, {n:'K8', r:0.05}, {n:'K9', r:0.043}, {n:'셀토스', r:0.055}, {n:'스포티지', r:0.055}, {n:'쏘렌토', r:0.055}, {n:'니로HEV', r:0.06}, {n:'카니발', r:0.06}];
 
     google.charts.load('current', {'packages':['corechart']});
-    google.charts.setOnLoadCallback(() => {
+    google.charts.setOnLoadCallback(() => { init(); });
+
+    function init() {
+        document.getElementById('cDate').valueAsDate = new Date();
         initMonthSelector();
-        setBrand('H');
-        render();
-    });
+        updateSalesModelList();
+        renderConsult();
+        renderSales();
+    }
+
+    function showTab(type) {
+        document.getElementById('tabConsult').classList.toggle('hidden', type !== 'consult');
+        document.getElementById('tabSales').classList.toggle('hidden', type !== 'sales');
+        document.getElementById('navConsult').classList.toggle('active', type === 'consult');
+        document.getElementById('navSales').classList.toggle('active', type === 'sales');
+        if(type === 'sales') renderSales();
+    }
 
     function setBrand(b) {
         currentBrand = b;
-        document.getElementById('btnH').className = 'tab-btn' + (b==='H'?' active hyundai':'');
-        document.getElementById('btnK').className = 'tab-btn' + (b==='K'?' active kia':'');
-        document.getElementById('kiaOption').style.display = (b==='K') ? 'block' : 'none';
-        document.getElementById('saveBtn').style.background = (b==='K') ? 'var(--kia)' : 'var(--accent)';
-        updateModelList();
+        document.getElementById('cBtnH').classList.toggle('active', b==='H');
+        document.getElementById('cBtnK').classList.toggle('active', b==='K');
+        updateSalesModelList();
     }
 
-    function updateModelList() {
-        const sel = document.getElementById('carModel');
+    function saveConsult() {
+        const name = document.getElementById('cName').value.trim();
+        if(!name) return alert("고객명을 입력하세요.");
+        const data = {
+            id: Date.now(), brand: currentBrand, name: name, date: document.getElementById('cDate').value,
+            model: document.getElementById('cModel').value, status: document.getElementById('cStatus').value,
+            note: document.getElementById('cNote').value, service: document.getElementById('cService').value
+        };
+        let list = JSON.parse(localStorage.getItem('consultData') || "[]");
+        list.push(data);
+        localStorage.setItem('consultData', JSON.stringify(list));
+        alert("상담 정보 저장 완료!");
+        if(data.status === '계약') linkToSales(data);
+        clearConsultForm();
+        renderConsult();
+    }
+
+    function renderConsult() {
+        const list = JSON.parse(localStorage.getItem('consultData') || "[]");
+        const listEl = document.getElementById('consultList');
+        const thisMonth = new Date().toISOString().substring(0,7);
+        let mCount = 0;
+        listEl.innerHTML = list.length ? "" : "<div style='text-align:center;padding:20px;color:#999'>내역 없음</div>";
+        list.slice().reverse().forEach(item => {
+            if(item.date.startsWith(thisMonth)) mCount++;
+            listEl.innerHTML += `
+                <div class="item">
+                    <div style="display:flex; justify-content:space-between">
+                        <strong>${item.name} (${item.model})</strong>
+                        <span class="badge st-${item.status}">${item.status}</span>
+                    </div>
+                    <div style="font-size:0.8em; color:#666; margin-top:5px;">
+                        [${item.brand==='H'?'현대':'기아'}] ${item.date}
+                    </div>
+                    <div style="margin-top:8px;">
+                        <select onchange="updateConsultStatus(${item.id}, this.value)" style="width:100px; padding:2px; font-size:0.75em; margin:0">
+                            <option value="진행중" ${item.status==='진행중'?'selected':''}>진행중</option>
+                            <option value="계약" ${item.status==='계약'?'selected':''}>계약</option>
+                            <option value="실패" ${item.status==='실패'?'selected':''}>실패</option>
+                        </select>
+                        <button onclick="deleteConsult(${item.id})" style="color:var(--danger); border:none; background:none; font-size:0.75em; float:right">삭제</button>
+                    </div>
+                </div>`;
+        });
+        document.getElementById('consultMonthTotal').innerText = mCount;
+    }
+
+    function updateConsultStatus(id, newStatus) {
+        let list = JSON.parse(localStorage.getItem('consultData') || "[]");
+        const idx = list.findIndex(i => i.id === id);
+        if(idx > -1) {
+            list[idx].status = newStatus;
+            localStorage.setItem('consultData', JSON.stringify(list));
+            if(newStatus === '계약') linkToSales(list[idx]);
+            renderConsult();
+        }
+    }
+
+    function linkToSales(item) {
+        if(!confirm(`[${item.name}] 고객님이 계약되었습니다. 실적 장부로 이동하여 수당을 기록할까요?`)) return;
+        showTab('sales');
+        setBrand(item.brand);
+        document.getElementById('sName').value = item.name;
+        document.getElementById('sLinkedNote').value = item.note || "";
+        document.getElementById('sLinkedService').value = item.service || "";
+        alert("고객 정보와 메모가 연동되었습니다. 차량가액을 입력해 주세요.");
+    }
+
+    function deleteConsult(id) {
+        if(confirm("삭제하시겠습니까?")) {
+            let list = JSON.parse(localStorage.getItem('consultData') || "[]").filter(i => i.id !== id);
+            localStorage.setItem('consultData', JSON.stringify(list));
+            renderConsult();
+        }
+    }
+
+    function clearConsultForm() {
+        document.getElementById('cName').value = ""; document.getElementById('cModel').value = "";
+        document.getElementById('cNote').value = ""; document.getElementById('cService').value = "";
+    }
+
+    function updateSalesModelList() {
+        const sel = document.getElementById('sModel');
         sel.innerHTML = "";
         const list = (currentBrand === 'H') ? hyundaiModels : kiaModels;
         list.forEach(m => sel.add(new Option(m.n, m.r)));
-        autoCalculate();
+        document.getElementById('sKiaRatioArea').style.display = (currentBrand==='K') ? 'block' : 'none';
+        autoCalcSales();
     }
 
-    function autoCalculate() {
-        const price = parseFloat(document.getElementById('carPrice').value) || 0;
-        const rate = parseFloat(document.getElementById('carModel').value);
+    function autoCalcSales() {
+        const price = parseFloat(document.getElementById('sPrice').value) || 0;
+        const rate = parseFloat(document.getElementById('sModel').value);
         let val = 0;
         if(currentBrand === 'H') val = (price / 1.15863) * rate * 0.7 * 0.967;
-        else val = (price / 1.15863) * rate * parseFloat(document.getElementById('kiaRatio').value) * 0.967;
-        document.getElementById('calcIncome').value = Math.floor(val);
+        else val = (price / 1.15863) * rate * parseFloat(document.getElementById('sKiaRatio').value) * 0.967;
+        document.getElementById('sCalc').value = Math.floor(val);
     }
 
-    function saveRecord() {
-        const customer = document.getElementById('customerName').value.trim() || "미지정 고객";
-        const calcVal = parseInt(document.getElementById('calcIncome').value) || 0;
-        const extraVal = parseInt(document.getElementById('extraIncome').value) || 0;
-        const expVal = parseInt(document.getElementById('expense').value) || 0;
-        const finalNet = calcVal + extraVal - expVal;
+    function saveSalesRecord() {
+        const name = document.getElementById('sName').value;
+        const price = document.getElementById('sPrice').value;
+        if(!name || !price) return alert("고객명과 가격을 입력하세요.");
 
         const now = new Date();
-        const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        const carName = document.getElementById('carModel').options[document.getElementById('carModel').selectedIndex].text;
+        const monthKey = document.getElementById('viewMonth').value;
+        const calcVal = parseInt(document.getElementById('sCalc').value) || 0;
+        const extraVal = parseInt(document.getElementById('sExtra').value) || 0;
+        const expVal = parseInt(document.getElementById('sExp').value) || 0;
        
         const record = {
-            id: Date.now(),
-            customer: customer,
-            brand: currentBrand,
-            carName: carName,
-            calcIncome: calcVal,
-            extraIncome: extraVal,
-            expense: expVal,
-            finalNet: finalNet,
-            date: now.toLocaleDateString()
+            id: Date.now(), name: name, brand: currentBrand,
+            carName: document.getElementById('sModel').options[document.getElementById('sModel').selectedIndex].text,
+            finalNet: calcVal + extraVal - expVal,
+            calcIncome: calcVal, extraIncome: extraVal, expense: expVal,
+            date: now.toLocaleDateString(),
+            note: document.getElementById('sLinkedNote').value,
+            service: document.getElementById('sLinkedService').value
         };
-       
+
         let data = JSON.parse(localStorage.getItem(monthKey) || "[]");
         data.push(record);
         localStorage.setItem(monthKey, JSON.stringify(data));
        
-        document.getElementById('customerName').value = "";
-        document.getElementById('carPrice').value = "";
-        document.getElementById('extraIncome').value = 0;
-        document.getElementById('expense').value = 0;
-       
-        alert(`${customer}님 판매 내역이 저장되었습니다.`);
-        render();
+        alert("실적 저장 완료!");
+        document.getElementById('sName').value = ""; document.getElementById('sPrice').value = "";
+        document.getElementById('sLinkedNote').value = ""; document.getElementById('sLinkedService').value = "";
+        renderSales();
     }
 
-    function render() {
-        const selectedMonth = document.getElementById('viewMonth').value;
-        if(!selectedMonth) return;
-
-        const monthData = JSON.parse(localStorage.getItem(selectedMonth) || "[]");
+    function renderSales() {
+        const month = document.getElementById('viewMonth').value;
+        const data = JSON.parse(localStorage.getItem(month) || "[]");
         let totalNet = 0;
-        const listEl = document.getElementById('historyList');
-        listEl.innerHTML = monthData.length ? "" : '<div style="text-align:center;color:#999;padding:20px;">기록이 없습니다.</div>';
+        const listEl = document.getElementById('salesList');
+        listEl.innerHTML = data.length ? "" : "<div style='text-align:center;padding:20px;color:#999'>내역 없음</div>";
        
-        monthData.slice().reverse().forEach(item => {
-            totalNet += parseInt(item.finalNet || 0);
-            const bBadge = item.brand === 'H' ? '<span class="brand-badge bg-h">현대</span>' : '<span class="brand-badge bg-k">기아</span>';
+        data.slice().reverse().forEach((item, index) => {
+            totalNet += item.finalNet;
             listEl.innerHTML += `
-                <div class="history-item">
-                    <div class="item-main">
-                        <div>
-                            <div class="customer-name">${item.customer}</div>
-                            ${bBadge}<strong>${item.carName}</strong>
-                        </div>
-                        <div style="text-align:right">
-                            <strong>${parseInt(item.finalNet).toLocaleString()}원</strong><br>
-                            <button class="btn-delete" onclick="deleteItem('${selectedMonth}', ${item.id})">✕ 삭제</button>
-                        </div>
+                <div class="item" onclick="toggleDetail(${item.id})">
+                    <div style="display:flex; justify-content:space-between">
+                        <strong>${item.name} (${item.carName})</strong>
+                        <strong>${item.finalNet.toLocaleString()}원</strong>
                     </div>
-                    <div class="item-details">
-                        <span>수당: ${parseInt(item.calcIncome).toLocaleString()}</span>
-                        <span class="val-plus">기타: +${parseInt(item.extraIncome).toLocaleString()}</span>
-                        <span class="val-minus">영업비: -${parseInt(item.expense).toLocaleString()}</span>
-                        <span style="margin-left:auto">${item.date}</span>
+                    <div style="font-size:0.8em; color:#888; margin-top:3px;">${item.date} (클릭 시 상세)</div>
+                    <div id="detail-${item.id}" class="detail-view">
+                        <p><span class="detail-label">특이사항:</span> ${item.note || '없음'}</p>
+                        <p><span class="detail-label">서비스:</span> ${item.service || '없음'}</p>
+                        <p style="font-size:0.9em; color:#999;">수당:${item.calcIncome.toLocaleString()} / 기타:${item.extraIncome.toLocaleString()} / 지출:${item.expense.toLocaleString()}</p>
+                        <button onclick="deleteSales('${month}', ${item.id})" style="color:var(--danger); border:none; background:none; padding:5px 0;">✕ 실적 삭제</button>
                     </div>
                 </div>`;
         });
-
-        document.getElementById('totalCount').innerText = monthData.length;
+        document.getElementById('totalCount').innerText = data.length;
         document.getElementById('totalIncome').innerText = totalNet.toLocaleString();
-        if (google.visualization && google.visualization.LineChart) drawChart();
+        drawChart();
     }
 
-    function deleteItem(m, id) {
-        if(confirm("이 기록을 삭제하시겠습니까?")) {
+    function toggleDetail(id) {
+        const el = document.getElementById(`detail-${id}`);
+        el.classList.toggle('active');
+    }
+
+    function deleteSales(m, id) {
+        event.stopPropagation(); // 부모 클릭 이벤트(토글) 방지
+        if(confirm("삭제하시겠습니까?")) {
             let d = JSON.parse(localStorage.getItem(m)).filter(i => i.id !== id);
             localStorage.setItem(m, JSON.stringify(d));
-            render();
+            renderSales();
         }
     }
 
     function drawChart() {
         const months = []; const now = new Date();
-        for(let i=5; i>=0; i--) {
-            let d = new Date(now.getFullYear(), now.getMonth()-i, 1);
-            months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`);
-        }
-        const chartData = [['Month', '순수익']];
-        months.forEach(m => {
-            const data = JSON.parse(localStorage.getItem(m) || "[]");
-            chartData.push([m.split('-')[1]+'월', data.reduce((acc, cur) => acc + parseInt(cur.finalNet || 0), 0)]);
-        });
-        new google.visualization.LineChart(document.getElementById('chart_div')).draw(google.visualization.arrayToDataTable(chartData), { curveType: 'function', legend: 'none', colors: ['#0076c0'], chartArea: {width:'85%', height:'70%'} });
+        for(let i=5; i>=0; i--) { let d = new Date(now.getFullYear(), now.getMonth()-i, 1); months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`); }
+        const chartData = [['Month', '수입']];
+        months.forEach(m => { const d = JSON.parse(localStorage.getItem(m) || "[]"); chartData.push([m.split('-')[1]+'월', d.reduce((a, c) => a + c.finalNet, 0)]); });
+        new google.visualization.LineChart(document.getElementById('chart_div')).draw(google.visualization.arrayToDataTable(chartData), { curveType:'function', legend:'none', chartArea:{width:'85%',height:'70%'} });
     }
 
     function initMonthSelector() {
@@ -242,3 +337,4 @@
 </script>
 </body>
 </html>
+
