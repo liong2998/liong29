@@ -10,13 +10,13 @@
         body { font-family: 'Pretendard', -apple-system, sans-serif; padding: 0; background: #f2f4f7; color: #333; margin: 0; }
         .container { max-width: 500px; margin: auto; padding: 15px; }
        
-        /* 네비게이션 탭 */
+        /* 네비게이션 */
         .nav-tab { display: flex; background: white; border-radius: 15px; margin-bottom: 15px; padding: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .nav-btn { flex: 1; padding: 12px; border: none; background: none; font-weight: bold; border-radius: 10px; cursor: pointer; color: #999; }
+        .nav-btn { flex: 1; padding: 12px; border: none; background: none; font-weight: bold; border-radius: 10px; cursor: pointer; color: #999; font-size: 0.9em; }
         .nav-btn.active { background: var(--hyundai); color: white; }
 
         .card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        h2 { color: var(--hyundai); font-size: 1.1em; margin-top: 0; border-left: 4px solid var(--hyundai); padding-left: 10px; }
+        h2 { color: var(--hyundai); font-size: 1.1em; margin-top: 0; border-left: 4px solid var(--hyundai); padding-left: 10px; display: flex; justify-content: space-between; align-items: center; }
        
         label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.8em; color: var(--gray); }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; margin-bottom: 10px; font-family: inherit; }
@@ -26,17 +26,15 @@
         .stat-box { background: var(--hyundai); color: white; padding: 12px; border-radius: 10px; text-align: center; }
         .stat-value { font-size: 1.1em; font-weight: 800; }
 
-        /* 리스트 아이템 */
         .item { padding: 12px 0; border-bottom: 1px solid #eee; cursor: pointer; }
         .badge { font-size: 0.7em; padding: 2px 5px; border-radius: 4px; color: white; margin-right: 5px; }
-        .st-진행중 { background: #ff9800; } .st-계약 { background: var(--success); } .st-실패 { background: var(--danger); }
+        .st-진행중 { background: #ff9800; } .st-계약 { background: #6f42c1; } .st-완료 { background: var(--success); } .st-실패 { background: var(--danger); }
        
-        /* 상세 내용 토글 영역 */
         .detail-view { background: #f9f9f9; padding: 10px; border-radius: 8px; margin-top: 5px; font-size: 0.85em; display: none; border: 1px solid #eee; }
         .detail-view.active { display: block; }
         .detail-label { color: var(--accent); font-weight: bold; margin-right: 5px; }
 
-        .history-list { max-height: 400px; overflow-y: auto; }
+        .history-list { max-height: 450px; overflow-y: auto; }
         .hidden { display: none; }
     </style>
 </head>
@@ -44,8 +42,9 @@
 
 <div class="container">
     <div class="nav-tab">
-        <button id="navConsult" class="nav-btn active" onclick="showTab('consult')">상담 관리</button>
-        <button id="navSales" class="nav-btn" onclick="showTab('sales')">실적/장부</button>
+        <button id="navConsult" class="nav-btn active" onclick="showTab('consult')">1.상담</button>
+        <button id="navContract" class="nav-btn" onclick="showTab('contract')">2.계약</button>
+        <button id="navSales" class="nav-btn" onclick="showTab('sales')">3.판매실적</button>
     </div>
 
     <div id="tabConsult">
@@ -58,56 +57,52 @@
             <input type="text" id="cName" placeholder="고객명">
             <input type="date" id="cDate">
             <input type="text" id="cModel" placeholder="차종 (예: 그랜저)">
-            <label>상담 결과</label>
-            <select id="cStatus">
-                <option value="진행중">진행중</option>
-                <option value="계약">계약</option>
-                <option value="실패">실패</option>
-            </select>
             <textarea id="cNote" placeholder="특이사항" rows="2"></textarea>
             <textarea id="cService" placeholder="서비스 내용" rows="2"></textarea>
             <button class="btn-main" onclick="saveConsult()">상담 내역 저장</button>
         </div>
         <div class="card">
-            <h2>상담 현황 (이번 달 <span id="consultMonthTotal">0</span>건)</h2>
+            <h2>상담 현황</h2>
             <div id="consultList" class="history-list"></div>
+        </div>
+    </div>
+
+    <div id="tabContract" class="hidden">
+        <div class="card">
+            <h2>계약 고객 리스트</h2>
+            <div id="contractList" class="history-list"></div>
         </div>
     </div>
 
     <div id="tabSales" class="hidden">
         <div class="card">
-            <h2>실적 리포트 <select id="viewMonth" onchange="renderSales()"></select></h2>
-            <div id="chart_div" style="width:100%; height:140px;"></div>
+            <h2>판매실적 리포트 <select id="viewMonth" onchange="renderSales()"></select></h2>
+            <div id="chart_div" style="width:100%; height:120px;"></div>
             <div class="dashboard">
-                <div class="stat-box"><div>판매 대수</div><div class="stat-value"><span id="totalCount">0</span>대</div></div>
-                <div class="stat-box" style="background: var(--success);"><div>합계 수익</div><div class="stat-value"><span id="totalIncome">0</span>원</div></div>
+                <div class="stat-box"><div>판매량</div><div class="stat-value"><span id="totalCount">0</span>대</div></div>
+                <div class="stat-box" style="background: var(--success);"><div>총 수익</div><div class="stat-value"><span id="totalIncome">0</span>원</div></div>
             </div>
         </div>
-        <div class="card" id="salesInputArea">
-            <h2 id="salesInputTitle">실적 등록</h2>
-            <input type="text" id="sName" placeholder="고객명">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <select id="sModel" onchange="autoCalcSales()"></select>
-                <input type="number" id="sPrice" placeholder="차량가" oninput="autoCalcSales()">
-            </div>
+       
+        <div id="salesFinalInput" class="card hidden" style="border: 2px solid var(--success);">
+            <h2 style="color:var(--success)">판매완료 확정</h2>
+            <p id="sTargetName" style="font-weight:bold; margin-bottom:10px;"></p>
+            <input type="number" id="sPrice" placeholder="차량 가격 (수당 계산용)" oninput="autoCalcSales()">
             <div id="sKiaRatioArea" class="hidden">
                 <label>기아 수당 비율</label>
-                <select id="sKiaRatio" onchange="autoCalcSales()">
-                    <option value="0.8">80%</option>
-                    <option value="0.9">90%</option>
-                </select>
+                <select id="sKiaRatio" onchange="autoCalcSales()"><option value="0.8">80%</option><option value="0.9">90%</option></select>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
                 <div><label>수당</label><input type="number" id="sCalc"></div>
                 <div><label>기타(+)</label><input type="number" id="sExtra" value="0"></div>
                 <div><label>영업비(-)</label><input type="number" id="sExp" value="0"></div>
             </div>
-            <input type="hidden" id="sLinkedNote">
-            <input type="hidden" id="sLinkedService">
-            <button class="btn-main" onclick="saveSalesRecord()">실적 저장하기</button>
+            <button class="btn-main" style="background:var(--success)" onclick="completeFinalSale()">최종 실적 저장</button>
+            <button class="btn-main" style="background:#ccc; margin-top:5px;" onclick="cancelFinalSale()">취소</button>
         </div>
+
         <div class="card">
-            <h2>계약 고객 리스트 (클릭 시 상세정보)</h2>
+            <h2>판매고객 리스트</h2>
             <div id="salesList" class="history-list"></div>
         </div>
     </div>
@@ -115,6 +110,7 @@
 
 <script>
     let currentBrand = 'H';
+    let tempContract = null; // 판매완료 처리용 임시 데이터
     const hyundaiModels = [{n:'아반떼', r:0.07}, {n:'쏘나타', r:0.06}, {n:'베뉴', r:0.068}, {n:'코나', r:0.058}, {n:'투싼', r:0.055}, {n:'싼타페', r:0.053}, {n:'그랜저', r:0.05}, {n:'팰리세이드', r:0.048}, {n:'팰리세이드 HEV', r:0.046}, {n:'G70', r:0.047}, {n:'GV70/G80', r:0.043}, {n:'GV80', r:0.041}, {n:'G90', r:0.035}, {n:'G90 리무진', r:0.032}];
     const kiaModels = [{n:'모닝', r:0.075}, {n:'레이', r:0.075}, {n:'K3', r:0.07}, {n:'K5', r:0.06}, {n:'K8', r:0.05}, {n:'K9', r:0.043}, {n:'셀토스', r:0.055}, {n:'스포티지', r:0.055}, {n:'쏘렌토', r:0.055}, {n:'니로HEV', r:0.06}, {n:'카니발', r:0.06}];
 
@@ -124,16 +120,16 @@
     function init() {
         document.getElementById('cDate').valueAsDate = new Date();
         initMonthSelector();
-        updateSalesModelList();
         renderConsult();
+        renderContract();
         renderSales();
     }
 
     function showTab(type) {
-        document.getElementById('tabConsult').classList.toggle('hidden', type !== 'consult');
-        document.getElementById('tabSales').classList.toggle('hidden', type !== 'sales');
-        document.getElementById('navConsult').classList.toggle('active', type === 'consult');
-        document.getElementById('navSales').classList.toggle('active', type === 'sales');
+        ['Consult', 'Contract', 'Sales'].forEach(t => {
+            document.getElementById('tab'+t).classList.toggle('hidden', type.toLowerCase() !== t.toLowerCase());
+            document.getElementById('nav'+t).classList.toggle('active', type.toLowerCase() === t.toLowerCase());
+        });
         if(type === 'sales') renderSales();
     }
 
@@ -141,22 +137,17 @@
         currentBrand = b;
         document.getElementById('cBtnH').classList.toggle('active', b==='H');
         document.getElementById('cBtnK').classList.toggle('active', b==='K');
-        updateSalesModelList();
     }
 
+    // --- 1. 상담 로직 ---
     function saveConsult() {
         const name = document.getElementById('cName').value.trim();
         if(!name) return alert("고객명을 입력하세요.");
-        const data = {
-            id: Date.now(), brand: currentBrand, name: name, date: document.getElementById('cDate').value,
-            model: document.getElementById('cModel').value, status: document.getElementById('cStatus').value,
-            note: document.getElementById('cNote').value, service: document.getElementById('cService').value
-        };
+        const data = { id: Date.now(), brand: currentBrand, name, date: document.getElementById('cDate').value, model: document.getElementById('cModel').value, note: document.getElementById('cNote').value, service: document.getElementById('cService').value, status: '진행중' };
         let list = JSON.parse(localStorage.getItem('consultData') || "[]");
         list.push(data);
         localStorage.setItem('consultData', JSON.stringify(list));
-        alert("상담 정보 저장 완료!");
-        if(data.status === '계약') linkToSales(data);
+        alert("상담 저장 완료");
         clearConsultForm();
         renderConsult();
     }
@@ -164,114 +155,110 @@
     function renderConsult() {
         const list = JSON.parse(localStorage.getItem('consultData') || "[]");
         const listEl = document.getElementById('consultList');
-        const thisMonth = new Date().toISOString().substring(0,7);
-        let mCount = 0;
-        listEl.innerHTML = list.length ? "" : "<div style='text-align:center;padding:20px;color:#999'>내역 없음</div>";
+        listEl.innerHTML = list.length ? "" : "<div style='text-align:center;padding:20px;color:#999'>상담 내역 없음</div>";
         list.slice().reverse().forEach(item => {
-            if(item.date.startsWith(thisMonth)) mCount++;
             listEl.innerHTML += `
-                <div class="item">
+                <div class="item" onclick="toggleDetail('c-${item.id}')">
                     <div style="display:flex; justify-content:space-between">
                         <strong>${item.name} (${item.model})</strong>
-                        <span class="badge st-${item.status}">${item.status}</span>
+                        <span class="badge st-진행중">상담중</span>
                     </div>
-                    <div style="font-size:0.8em; color:#666; margin-top:5px;">
-                        [${item.brand==='H'?'현대':'기아'}] ${item.date}
-                    </div>
-                    <div style="margin-top:8px;">
-                        <select onchange="updateConsultStatus(${item.id}, this.value)" style="width:100px; padding:2px; font-size:0.75em; margin:0">
-                            <option value="진행중" ${item.status==='진행중'?'selected':''}>진행중</option>
-                            <option value="계약" ${item.status==='계약'?'selected':''}>계약</option>
-                            <option value="실패" ${item.status==='실패'?'selected':''}>실패</option>
-                        </select>
-                        <button onclick="deleteConsult(${item.id})" style="color:var(--danger); border:none; background:none; font-size:0.75em; float:right">삭제</button>
+                    <div id="detail-c-${item.id}" class="detail-view">
+                        <p><span class="detail-label">특이사항:</span> ${item.note || '없음'}</p>
+                        <p><span class="detail-label">서비스:</span> ${item.service || '없음'}</p>
+                        <button class="btn-main" style="padding:8px; font-size:0.8em; margin-top:5px;" onclick="moveToContract(${item.id})">계약으로 전환</button>
+                        <button onclick="deleteData('consultData', ${item.id}, renderConsult)" style="color:var(--danger); border:none; background:none; font-size:0.8em; float:right; margin-top:10px;">삭제</button>
                     </div>
                 </div>`;
         });
-        document.getElementById('consultMonthTotal').innerText = mCount;
     }
 
-    function updateConsultStatus(id, newStatus) {
-        let list = JSON.parse(localStorage.getItem('consultData') || "[]");
-        const idx = list.findIndex(i => i.id === id);
-        if(idx > -1) {
-            list[idx].status = newStatus;
-            localStorage.setItem('consultData', JSON.stringify(list));
-            if(newStatus === '계약') linkToSales(list[idx]);
-            renderConsult();
+    // --- 2. 계약 로직 ---
+    function moveToContract(id) {
+        event.stopPropagation();
+        let cList = JSON.parse(localStorage.getItem('consultData') || "[]");
+        const item = cList.find(i => i.id === id);
+        if(confirm(`[${item.name}] 고객을 계약 리스트로 이동할까요?`)) {
+            let kList = JSON.parse(localStorage.getItem('contractData') || "[]");
+            item.status = '계약중';
+            kList.push(item);
+            localStorage.setItem('contractData', JSON.stringify(kList));
+            localStorage.setItem('consultData', JSON.stringify(cList.filter(i => i.id !== id)));
+            renderConsult(); renderContract();
+            showTab('contract');
         }
     }
 
-    function linkToSales(item) {
-        if(!confirm(`[${item.name}] 고객님이 계약되었습니다. 실적 장부로 이동하여 수당을 기록할까요?`)) return;
+    function renderContract() {
+        const list = JSON.parse(localStorage.getItem('contractData') || "[]");
+        const listEl = document.getElementById('contractList');
+        listEl.innerHTML = list.length ? "" : "<div style='text-align:center;padding:20px;color:#999'>계약중인 고객 없음</div>";
+        list.slice().reverse().forEach(item => {
+            listEl.innerHTML += `
+                <div class="item" onclick="toggleDetail('k-${item.id}')">
+                    <div style="display:flex; justify-content:space-between">
+                        <strong>${item.name} (${item.model})</strong>
+                        <span class="badge st-계약">계약중</span>
+                    </div>
+                    <div id="detail-k-${item.id}" class="detail-view">
+                        <p><span class="detail-label">브랜드:</span> ${item.brand==='H'?'현대':'기아'}</p>
+                        <p><span class="detail-label">특이사항:</span> ${item.note || '없음'}</p>
+                        <p><span class="detail-label">서비스:</span> ${item.service || '없음'}</p>
+                        <button class="btn-main" style="padding:8px; font-size:0.8em; margin-top:5px; background:var(--success)" onclick="openFinalInput(${item.id})">판매완료 처리 (실적연동)</button>
+                        <button onclick="deleteData('contractData', ${item.id}, renderContract)" style="color:var(--danger); border:none; background:none; font-size:0.8em; float:right; margin-top:10px;">계약 취소/삭제</button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    // --- 3. 판매실적 로직 ---
+    function openFinalInput(id) {
+        event.stopPropagation();
+        const list = JSON.parse(localStorage.getItem('contractData') || "[]");
+        tempContract = list.find(i => i.id === id);
         showTab('sales');
-        setBrand(item.brand);
-        document.getElementById('sName').value = item.name;
-        document.getElementById('sLinkedNote').value = item.note || "";
-        document.getElementById('sLinkedService').value = item.service || "";
-        alert("고객 정보와 메모가 연동되었습니다. 차량가액을 입력해 주세요.");
-    }
-
-    function deleteConsult(id) {
-        if(confirm("삭제하시겠습니까?")) {
-            let list = JSON.parse(localStorage.getItem('consultData') || "[]").filter(i => i.id !== id);
-            localStorage.setItem('consultData', JSON.stringify(list));
-            renderConsult();
-        }
-    }
-
-    function clearConsultForm() {
-        document.getElementById('cName').value = ""; document.getElementById('cModel').value = "";
-        document.getElementById('cNote').value = ""; document.getElementById('cService').value = "";
-    }
-
-    function updateSalesModelList() {
-        const sel = document.getElementById('sModel');
-        sel.innerHTML = "";
-        const list = (currentBrand === 'H') ? hyundaiModels : kiaModels;
-        list.forEach(m => sel.add(new Option(m.n, m.r)));
-        document.getElementById('sKiaRatioArea').style.display = (currentBrand==='K') ? 'block' : 'none';
+        document.getElementById('salesFinalInput').classList.remove('hidden');
+        document.getElementById('sTargetName').innerText = `고객: ${tempContract.name} / 차종: ${tempContract.model}`;
+        document.getElementById('sKiaRatioArea').style.display = (tempContract.brand==='K') ? 'block' : 'none';
         autoCalcSales();
     }
 
     function autoCalcSales() {
+        if(!tempContract) return;
         const price = parseFloat(document.getElementById('sPrice').value) || 0;
-        const rate = parseFloat(document.getElementById('sModel').value);
+        const models = tempContract.brand === 'H' ? hyundaiModels : kiaModels;
+        const found = models.find(m => m.n === tempContract.model) || {r: 0.05}; // 못찾으면 기본 5%
         let val = 0;
-        if(currentBrand === 'H') val = (price / 1.15863) * rate * 0.7 * 0.967;
-        else val = (price / 1.15863) * rate * parseFloat(document.getElementById('sKiaRatio').value) * 0.967;
+        if(tempContract.brand === 'H') val = (price / 1.15863) * found.r * 0.7 * 0.967;
+        else val = (price / 1.15863) * found.r * parseFloat(document.getElementById('sKiaRatio').value) * 0.967;
         document.getElementById('sCalc').value = Math.floor(val);
     }
 
-    function saveSalesRecord() {
-        const name = document.getElementById('sName').value;
-        const price = document.getElementById('sPrice').value;
-        if(!name || !price) return alert("고객명과 가격을 입력하세요.");
-
-        const now = new Date();
+    function completeFinalSale() {
         const monthKey = document.getElementById('viewMonth').value;
         const calcVal = parseInt(document.getElementById('sCalc').value) || 0;
         const extraVal = parseInt(document.getElementById('sExtra').value) || 0;
         const expVal = parseInt(document.getElementById('sExp').value) || 0;
        
-        const record = {
-            id: Date.now(), name: name, brand: currentBrand,
-            carName: document.getElementById('sModel').options[document.getElementById('sModel').selectedIndex].text,
-            finalNet: calcVal + extraVal - expVal,
-            calcIncome: calcVal, extraIncome: extraVal, expense: expVal,
-            date: now.toLocaleDateString(),
-            note: document.getElementById('sLinkedNote').value,
-            service: document.getElementById('sLinkedService').value
-        };
-
-        let data = JSON.parse(localStorage.getItem(monthKey) || "[]");
-        data.push(record);
-        localStorage.setItem(monthKey, JSON.stringify(data));
+        const record = { ...tempContract, status: '판매완료', finalNet: calcVal + extraVal - expVal, calcIncome: calcVal, extraIncome: extraVal, expense: expVal, saleDate: new Date().toLocaleDateString() };
        
-        alert("실적 저장 완료!");
-        document.getElementById('sName').value = ""; document.getElementById('sPrice').value = "";
-        document.getElementById('sLinkedNote').value = ""; document.getElementById('sLinkedService').value = "";
-        renderSales();
+        let sList = JSON.parse(localStorage.getItem(monthKey) || "[]");
+        sList.push(record);
+        localStorage.setItem(monthKey, JSON.stringify(sList));
+       
+        // 계약 리스트에서 제거
+        let kList = JSON.parse(localStorage.getItem('contractData') || "[]").filter(i => i.id !== tempContract.id);
+        localStorage.setItem('contractData', JSON.stringify(kList));
+       
+        alert("판매실적으로 등록되었습니다!");
+        cancelFinalSale();
+        renderContract(); renderSales();
+    }
+
+    function cancelFinalSale() {
+        tempContract = null;
+        document.getElementById('salesFinalInput').classList.add('hidden');
+        document.getElementById('sPrice').value = "";
     }
 
     function renderSales() {
@@ -279,22 +266,20 @@
         const data = JSON.parse(localStorage.getItem(month) || "[]");
         let totalNet = 0;
         const listEl = document.getElementById('salesList');
-        listEl.innerHTML = data.length ? "" : "<div style='text-align:center;padding:20px;color:#999'>내역 없음</div>";
-       
-        data.slice().reverse().forEach((item, index) => {
+        listEl.innerHTML = data.length ? "" : "<div style='text-align:center;padding:20px;color:#999'>판매 실적 없음</div>";
+        data.slice().reverse().forEach(item => {
             totalNet += item.finalNet;
             listEl.innerHTML += `
-                <div class="item" onclick="toggleDetail(${item.id})">
+                <div class="item" onclick="toggleDetail('s-${item.id}')">
                     <div style="display:flex; justify-content:space-between">
-                        <strong>${item.name} (${item.carName})</strong>
+                        <strong>${item.name} (${item.model})</strong>
                         <strong>${item.finalNet.toLocaleString()}원</strong>
                     </div>
-                    <div style="font-size:0.8em; color:#888; margin-top:3px;">${item.date} (클릭 시 상세)</div>
-                    <div id="detail-${item.id}" class="detail-view">
+                    <div id="detail-s-${item.id}" class="detail-view">
                         <p><span class="detail-label">특이사항:</span> ${item.note || '없음'}</p>
                         <p><span class="detail-label">서비스:</span> ${item.service || '없음'}</p>
                         <p style="font-size:0.9em; color:#999;">수당:${item.calcIncome.toLocaleString()} / 기타:${item.extraIncome.toLocaleString()} / 지출:${item.expense.toLocaleString()}</p>
-                        <button onclick="deleteSales('${month}', ${item.id})" style="color:var(--danger); border:none; background:none; padding:5px 0;">✕ 실적 삭제</button>
+                        <button onclick="deleteData('${month}', ${item.id}, renderSales)" style="color:var(--danger); border:none; background:none; font-size:0.8em;">실적 삭제</button>
                     </div>
                 </div>`;
         });
@@ -303,18 +288,23 @@
         drawChart();
     }
 
+    // --- 공통 함수 ---
     function toggleDetail(id) {
         const el = document.getElementById(`detail-${id}`);
-        el.classList.toggle('active');
+        if(el) el.classList.toggle('active');
     }
 
-    function deleteSales(m, id) {
-        event.stopPropagation(); // 부모 클릭 이벤트(토글) 방지
-        if(confirm("삭제하시겠습니까?")) {
-            let d = JSON.parse(localStorage.getItem(m)).filter(i => i.id !== id);
-            localStorage.setItem(m, JSON.stringify(d));
-            renderSales();
+    function deleteData(key, id, callback) {
+        event.stopPropagation();
+        if(confirm("정말 삭제하시겠습니까?")) {
+            let list = JSON.parse(localStorage.getItem(key) || "[]").filter(i => i.id !== id);
+            localStorage.setItem(key, JSON.stringify(list));
+            callback();
         }
+    }
+
+    function clearConsultForm() {
+        document.getElementById('cName').value = ""; document.getElementById('cModel').value = ""; document.getElementById('cNote').value = ""; document.getElementById('cService').value = "";
     }
 
     function drawChart() {
@@ -337,4 +327,3 @@
 </script>
 </body>
 </html>
-
