@@ -3,50 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>현대·기아 영업 매니저 PRO</title>
+    <title>영업 매니저 PRO v11.0</title>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <style>
         :root { --hyundai: #002c5f; --kia: #ea0029; --accent: #0076c0; --success: #28a745; --danger: #dc3545; --gray: #666; }
         body { font-family: 'Pretendard', -apple-system, sans-serif; padding: 0; background: #f2f4f7; color: #333; margin: 0; }
         .container { max-width: 500px; margin: auto; padding: 15px; }
-       
+        
+        /* 네비게이션 */
         .nav-tab { display: flex; background: white; border-radius: 15px; margin-bottom: 10px; padding: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .nav-btn { flex: 1; padding: 12px; border: none; background: none; font-weight: bold; border-radius: 10px; cursor: pointer; color: #999; font-size: 0.85em; }
         .nav-btn.active { background: var(--hyundai); color: white; }
+
+        /* 설정 레이어 */
+        #settingLayer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; display: none; }
+        .setting-box { background: white; width: 90%; max-width: 400px; margin: 40px auto; padding: 20px; border-radius: 15px; max-height: 80vh; overflow-y: auto; }
 
         .backup-bar { display: flex; gap: 5px; margin-bottom: 15px; }
         .btn-backup { flex: 1; padding: 8px; background: #555; color: white; border: none; border-radius: 8px; font-size: 0.75em; font-weight: bold; }
 
         .card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
         h2 { color: var(--hyundai); font-size: 1.1em; margin-top: 0; border-left: 4px solid var(--hyundai); padding-left: 10px; display: flex; justify-content: space-between; align-items: center; }
-       
+        
         label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.8em; color: var(--gray); }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; margin-bottom: 10px; font-family: inherit; }
         .btn-main { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-       
+        
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .stat-box { background: var(--hyundai); color: white; padding: 12px; border-radius: 10px; text-align: center; }
         .stat-value { font-size: 1.1em; font-weight: 800; }
 
-        .item { padding: 12px 0; border-bottom: 1px solid #eee; cursor: pointer; }
+        .item { padding: 12px 0; border-bottom: 1px solid #eee; }
         .badge { font-size: 0.7em; padding: 2px 5px; border-radius: 4px; color: white; margin-right: 5px; }
         .st-진행중 { background: #ff9800; } .st-계약 { background: #6f42c1; } .st-완료 { background: var(--success); }
-       
+        
         .detail-view { background: #f9f9f9; padding: 12px; border-radius: 8px; margin-top: 5px; font-size: 0.85em; display: none; border: 1px solid #eee; line-height: 1.5; }
         .detail-view.active { display: block; }
         .detail-label { color: var(--accent); font-weight: bold; margin-right: 5px; display: inline-block; width: 65px; }
 
         .history-list { max-height: 450px; overflow-y: auto; }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="backup-bar">
-        <button class="btn-backup" onclick="exportData()">엑셀(CSV) 저장</button>
+        <button class="btn-backup" onclick="exportData()">CSV 저장</button>
         <button class="btn-backup" onclick="copyToClipboard()">전체데이터 복사</button>
-        <button class="btn-backup" style="background:var(--danger)" onclick="importData()">데이터 복원</button>
+        <button class="btn-backup" onclick="document.getElementById('settingLayer').style.display='block'" style="background:var(--hyundai)">⚙️ 설정</button>
     </div>
 
     <div class="nav-tab">
@@ -64,7 +69,7 @@
             </div>
             <input type="text" id="cName" placeholder="고객명">
             <input type="date" id="cDate">
-            <input type="text" id="cModel" placeholder="차종">
+            <input type="text" id="cModel" placeholder="차종 (직접 입력)">
             <textarea id="cNote" placeholder="특이사항" rows="2"></textarea>
             <textarea id="cService" placeholder="서비스 내용" rows="2"></textarea>
             <button class="btn-main" onclick="saveConsult()">상담 내역 저장</button>
@@ -83,64 +88,149 @@
     </div>
 
     <div id="tabSales" class="hidden">
-        <div class="card">
-            <h2>판매실적 리포트 <select id="viewMonth" onchange="renderSales()"></select></h2>
-            <div id="chart_div" style="width:100%; height:120px;"></div>
-            <div class="dashboard">
-                <div class="stat-box"><div>판매량</div><div class="stat-value"><span id="totalCount">0</span>대</div></div>
-                <div class="stat-box" style="background: var(--success);"><div>총 수익</div><div class="stat-value"><span id="totalIncome">0</span>원</div></div>
-            </div>
-        </div>
-       
-        <div id="salesFinalInput" class="card hidden" style="border: 2px solid var(--success);">
-            <h2 style="color:var(--success)">판매완료 확정</h2>
-            <p id="sTargetName" style="font-weight:bold; margin-bottom:10px;"></p>
-            <input type="number" id="sPrice" placeholder="차량 가격 (수당 계산용)" oninput="autoCalcSales()">
+        <div id="salesFinalInput" class="card hidden" style="border: 3px solid var(--success);">
+            <h2 style="color:var(--success)">💰 판매완료 정산</h2>
+            <p id="sTargetName" style="font-weight:bold; background:#f8f9fa; padding:10px; border-radius:8px;"></p>
+            <label>실제 차량 가격 (원)</label>
+            <input type="number" id="sPrice" placeholder="차량 가격 입력" oninput="autoCalcSales()">
+            
             <div id="sKiaRatioArea" class="hidden">
                 <label>기아 수당 비율</label>
-                <select id="sKiaRatio" onchange="autoCalcSales()"><option value="0.8">80%</option><option value="0.9">90%</option></select>
+                <select id="sKiaRatio" onchange="autoCalcSales()"><option value="0.9">90%</option><option value="0.8">80%</option></select>
             </div>
+
             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-                <div><label>수당</label><input type="number" id="sCalc"></div>
-                <div><label>기타(+)</label><input type="number" id="sExtra" value="0"></div>
-                <div><label>영업비(-)</label><input type="number" id="sExp" value="0"></div>
+                <div><label>수당(자동)</label><input type="number" id="sCalc"></div>
+                <div><label>기타(+)</label><input type="number" id="sExtra" value="0" oninput="autoCalcSales()"></div>
+                <div><label>영업비(-)</label><input type="number" id="sExp" value="0" oninput="autoCalcSales()"></div>
+            </div>
+            <div style="text-align:right; font-weight:bold; color:var(--success); margin:10px 0; font-size:1.2em;">
+                최종 수익: <span id="vFinalNet">0</span>원
             </div>
             <button class="btn-main" style="background:var(--success)" onclick="completeFinalSale()">최종 실적 저장</button>
             <button class="btn-main" style="background:#ccc; margin-top:5px;" onclick="cancelFinalSale()">취소</button>
         </div>
 
         <div class="card">
+            <h2>판매실적 리포트 <select id="viewMonth" onchange="renderSales()" style="width:auto;"></select></h2>
+            <div id="chart_div" style="width:100%; height:120px;"></div>
+            <div class="dashboard">
+                <div class="stat-box"><div>판매량</div><div class="stat-value"><span id="totalCount">0</span>대</div></div>
+                <div class="stat-box" style="background: var(--success);"><div>총 수익</div><div class="stat-value"><span id="totalIncome">0</span>원</div></div>
+            </div>
+        </div>
+        
+        <div class="card">
             <h2>판매고객 리스트</h2>
             <div id="salesList" class="history-list"></div>
+        </div>
+    </div>
+
+    <div id="settingLayer">
+        <div class="setting-box">
+            <h2 style="border:none;">⚙️ 시스템 설정 <span onclick="document.getElementById('settingLayer').style.display='none'" style="cursor:pointer; color:#999;">✕</span></h2>
+            
+            <div style="background:#f8f9fa; padding:10px; border-radius:10px; margin-bottom:15px;">
+                <label>기본 수당 계수 (수정 가능)</label>
+                <input type="number" id="setBase" step="0.00001">
+                <button class="btn-backup" style="width:100%; background:var(--hyundai)" onclick="saveSettingBase()">계수 저장</button>
+            </div>
+
+            <div style="background:#f8f9fa; padding:10px; border-radius:10px;">
+                <label>차종 요율 추가/관리</label>
+                <div style="display:flex; gap:5px; margin-bottom:5px;">
+                    <select id="newBrand" style="flex:1;"><option value="H">현대</option><option value="K">기아</option></select>
+                    <input type="text" id="newModel" placeholder="차종명" style="flex:2;">
+                </div>
+                <input type="number" id="newRate" placeholder="요율 (예: 0.05)" step="0.001">
+                <button class="btn-backup" style="width:100%; background:var(--accent)" onclick="addNewModel()">차종 요율 추가</button>
+            </div>
+
+            <div id="modelListArea" style="margin-top:15px; font-size:0.8em; border-top:1px solid #ddd; padding-top:10px;">
+                </div>
         </div>
     </div>
 </div>
 
 <script>
-    let currentBrand = 'H'; let tempContract = null;
-    const hyundaiModels = [{n:'아반떼', r:0.07}, {n:'쏘나타', r:0.06}, {n:'베뉴', r:0.068}, {n:'코나', r:0.058}, {n:'투싼', r:0.055}, {n:'싼타페', r:0.053}, {n:'그랜저', r:0.05}, {n:'팰리세이드', r:0.048}, {n:'팰리세이드 HEV', r:0.046}, {n:'G70', r:0.047}, {n:'GV70/G80', r:0.043}, {n:'GV80', r:0.041}, {n:'G90', r:0.035}, {n:'G90 리무진', r:0.032}];
-    const kiaModels = [{n:'모닝', r:0.075}, {n:'레이', r:0.075}, {n:'K3', r:0.07}, {n:'K5', r:0.06}, {n:'K8', r:0.05}, {n:'K9', r:0.043}, {n:'셀토스', r:0.055}, {n:'스포티지', r:0.055}, {n:'쏘렌토', r:0.055}, {n:'니로HEV', r:0.06}, {n:'카니발', r:0.06}];
-    google.charts.load('current', {'packages':['corechart']});
-    google.charts.setOnLoadCallback(() => { init(); });
-    function init() { document.getElementById('cDate').valueAsDate = new Date(); initMonthSelector(); renderConsult(); renderContract(); renderSales(); }
-    function showTab(type) { ['Consult', 'Contract', 'Sales'].forEach(t => { document.getElementById('tab'+t).classList.toggle('hidden', type.toLowerCase() !== t.toLowerCase()); document.getElementById('nav'+t).classList.toggle('active', type.toLowerCase() === t.toLowerCase()); }); if(type === 'sales') renderSales(); }
-    function setBrand(b) { currentBrand = b; document.getElementById('cBtnH').classList.toggle('active', b==='H'); document.getElementById('cBtnK').classList.toggle('active', b==='K'); }
+    let currentBrand = 'H'; 
+    let tempContract = null;
+    
+    // 초기 기본 데이터
+    const defH = [{n:'아반떼', r:0.07}, {n:'쏘나타', r:0.06}, {n:'그랜저', r:0.05}, {n:'싼타페', r:0.053}, {n:'GV80', r:0.041}];
+    const defK = [{n:'모닝', r:0.075}, {n:'K5', r:0.06}, {n:'쏘렌토', r:0.055}, {n:'카니발', r:0.06}];
 
-    // 1. 상담 렌더링
+    let myBase = JSON.parse(localStorage.getItem('myBase')) || 1.15863;
+    let myH = JSON.parse(localStorage.getItem('myH')) || defH;
+    let myK = JSON.parse(localStorage.getItem('myK')) || defK;
+
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(init);
+
+    function init() {
+        document.getElementById('cDate').valueAsDate = new Date();
+        document.getElementById('setBase').value = myBase;
+        initMonthSelector();
+        renderConsult();
+        renderContract();
+        renderSales();
+        renderModelSetting();
+    }
+
+    function showTab(type) {
+        ['Consult', 'Contract', 'Sales'].forEach(t => {
+            document.getElementById('tab'+t).classList.toggle('hidden', type.toLowerCase() !== t.toLowerCase());
+            document.getElementById('nav'+t).classList.toggle('active', type.toLowerCase() === t.toLowerCase());
+        });
+        if(type === 'sales') renderSales();
+    }
+
+    function setBrand(b) {
+        currentBrand = b;
+        document.getElementById('cBtnH').classList.toggle('active', b==='H');
+        document.getElementById('cBtnK').classList.toggle('active', b==='K');
+    }
+
+    // --- 1. 상담 로직 ---
+    function saveConsult() {
+        const name = document.getElementById('cName').value.trim();
+        const model = document.getElementById('cModel').value.trim();
+        if(!name || !model) return alert("고객명과 차종을 입력하세요!");
+
+        const data = {
+            id: Date.now(),
+            brand: currentBrand,
+            name,
+            date: document.getElementById('cDate').value,
+            model,
+            note: document.getElementById('cNote').value,
+            service: document.getElementById('cService').value
+        };
+
+        let list = JSON.parse(localStorage.getItem('consultData') || "[]");
+        list.push(data);
+        localStorage.setItem('consultData', JSON.stringify(list));
+        alert("상담 저장 완료");
+        document.getElementById('cName').value = "";
+        document.getElementById('cModel').value = "";
+        renderConsult();
+    }
+
     function renderConsult() {
         const list = JSON.parse(localStorage.getItem('consultData') || "[]");
         const listEl = document.getElementById('consultList');
         listEl.innerHTML = list.length ? "" : "<div style='text-align:center;padding:20px;color:#999'>내역 없음</div>";
         list.slice().reverse().forEach(item => {
             listEl.innerHTML += `
-                <div class="item" onclick="toggleDetail('c-${item.id}')">
-                    <div style="display:flex; justify-content:space-between">
+                <div class="item">
+                    <div onclick="toggleDetail('c-${item.id}')" style="display:flex; justify-content:space-between">
                         <strong>${item.name} (${item.model})</strong>
                         <span class="badge st-진행중">상담중</span>
                     </div>
                     <div id="detail-c-${item.id}" class="detail-view">
-                        <p><span class="detail-label">특이사항:</span> ${item.note || '없음'}</p>
-                        <p><span class="detail-label">서비스:</span> ${item.service || '없음'}</p>
+                        <p><span class="detail-label">브랜드:</span> ${item.brand==='H'?'현대':'기아'}</p>
+                        <p><span class="detail-label">특이사항:</span> ${item.note || '-'}</p>
+                        <p><span class="detail-label">서비스:</span> ${item.service || '-'}</p>
                         <button class="btn-main" style="padding:8px; font-size:0.8em; margin-top:10px;" onclick="moveToContract(${item.id})">계약 전환</button>
                         <button onclick="deleteData('consultData', ${item.id}, renderConsult)" style="color:var(--danger); border:none; background:none; font-size:0.8em; float:right; margin-top:15px;">삭제</button>
                     </div>
@@ -148,30 +238,116 @@
         });
     }
 
-    // 2. 계약 렌더링 (수정 핵심 부분)
+    function moveToContract(id) {
+        let cList = JSON.parse(localStorage.getItem('consultData') || "[]");
+        const item = cList.find(i => i.id === id);
+        if(confirm(`[${item.name}] 고객님을 계약 단계로 이동하시겠습니까?`)) {
+            let kList = JSON.parse(localStorage.getItem('contractData') || "[]");
+            kList.push(item);
+            localStorage.setItem('contractData', JSON.stringify(kList));
+            localStorage.setItem('consultData', JSON.stringify(cList.filter(i => i.id !== id)));
+            renderConsult();
+            renderContract();
+            showTab('contract');
+        }
+    }
+
+    // --- 2. 계약 로직 ---
     function renderContract() {
         const list = JSON.parse(localStorage.getItem('contractData') || "[]");
         const listEl = document.getElementById('contractList');
         listEl.innerHTML = list.length ? "" : "<div style='text-align:center;padding:20px;color:#999'>계약 내역 없음</div>";
         list.slice().reverse().forEach(item => {
             listEl.innerHTML += `
-                <div class="item" onclick="toggleDetail('k-${item.id}')">
-                    <div style="display:flex; justify-content:space-between">
+                <div class="item">
+                    <div onclick="toggleDetail('k-${item.id}')" style="display:flex; justify-content:space-between">
                         <strong>${item.name} (${item.model})</strong>
                         <span class="badge st-계약">계약중</span>
                     </div>
                     <div id="detail-k-${item.id}" class="detail-view">
                         <p><span class="detail-label">브랜드:</span> ${item.brand==='H'?'현대':'기아'}</p>
-                        <p><span class="detail-label">특이사항:</span> ${item.note || '없음'}</p>
-                        <p><span class="detail-label">서비스:</span> ${item.service || '없음'}</p>
-                        <button class="btn-main" style="padding:8px; font-size:0.8em; background:var(--success); margin-top:10px;" onclick="openFinalInput(${item.id})">판매완료(실적연동)</button>
+                        <p><span class="detail-label">서비스:</span> ${item.service || '-'}</p>
+                        <button class="btn-main" style="padding:8px; font-size:0.8em; background:var(--success); margin-top:10px;" onclick="openFinalInput(${item.id})">판매완료(실적정산)</button>
                         <button onclick="deleteData('contractData', ${item.id}, renderContract)" style="color:var(--danger); border:none; background:none; font-size:0.8em; float:right; margin-top:15px;">삭제</button>
                     </div>
                 </div>`;
         });
     }
 
-    // 3. 판매실적 렌더링
+    // 연동 함수: 실적 탭으로 보내고 정산창 띄움
+    function openFinalInput(id) {
+        const list = JSON.parse(localStorage.getItem('contractData') || "[]");
+        tempContract = list.find(i => i.id === id);
+        
+        showTab('sales');
+        document.getElementById('salesFinalInput').classList.remove('hidden');
+        document.getElementById('sTargetName').innerText = `대상: ${tempContract.name} (${tempContract.model})`;
+        document.getElementById('sKiaRatioArea').classList.toggle('hidden', tempContract.brand !== 'K');
+        document.getElementById('sPrice').focus();
+        window.scrollTo(0,0);
+    }
+
+    // --- 3. 실적 로직 ---
+    function autoCalcSales() {
+        if(!tempContract) return;
+        const price = parseFloat(document.getElementById('sPrice').value) || 0;
+        const extra = parseInt(document.getElementById('sExtra').value) || 0;
+        const exp = parseInt(document.getElementById('sExp').value) || 0;
+
+        const models = tempContract.brand === 'H' ? myH : myK;
+        const found = models.find(m => m.n === tempContract.model) || {r: 0.05}; // 못찾으면 5% 적용
+        
+        let val = 0;
+        if(tempContract.brand === 'H') {
+            val = (price / myBase) * found.r * 0.7 * 0.967;
+        } else {
+            const kiaRatio = parseFloat(document.getElementById('sKiaRatio').value);
+            val = (price / myBase) * found.r * kiaRatio * 0.967;
+        }
+
+        const calcResult = Math.floor(val);
+        document.getElementById('sCalc').value = calcResult;
+        document.getElementById('vFinalNet').innerText = (calcResult + extra - exp).toLocaleString();
+    }
+
+    function completeFinalSale() {
+        if(!tempContract) return;
+        const monthKey = document.getElementById('viewMonth').value;
+        const calcVal = parseInt(document.getElementById('sCalc').value) || 0;
+        const extraVal = parseInt(document.getElementById('sExtra').value) || 0;
+        const expVal = parseInt(document.getElementById('sExp').value) || 0;
+
+        const record = {
+            ...tempContract,
+            finalNet: calcVal + extraVal - expVal,
+            calcIncome: calcVal,
+            extraIncome: extraVal,
+            expense: expVal,
+            saleDate: new Date().toLocaleDateString()
+        };
+
+        let sList = JSON.parse(localStorage.getItem(monthKey) || "[]");
+        sList.push(record);
+        localStorage.setItem(monthKey, JSON.stringify(sList));
+
+        // 계약 리스트에서 제거
+        let kList = JSON.parse(localStorage.getItem('contractData') || "[]");
+        localStorage.setItem('contractData', JSON.stringify(kList.filter(i => i.id !== tempContract.id)));
+
+        alert("실적 저장 완료!");
+        cancelFinalSale();
+        renderContract();
+        renderSales();
+    }
+
+    function cancelFinalSale() {
+        tempContract = null;
+        document.getElementById('salesFinalInput').classList.add('hidden');
+        document.getElementById('sPrice').value = "";
+        document.getElementById('sExtra').value = "0";
+        document.getElementById('sExp').value = "0";
+    }
+
     function renderSales() {
         const month = document.getElementById('viewMonth').value;
         const data = JSON.parse(localStorage.getItem(month) || "[]");
@@ -187,9 +363,8 @@
                         <strong>${item.finalNet.toLocaleString()}원</strong>
                     </div>
                     <div id="detail-s-${item.id}" class="detail-view">
-                        <p><span class="detail-label">특이사항:</span> ${item.note || '없음'}</p>
-                        <p><span class="detail-label">서비스:</span> ${item.service || '없음'}</p>
-                        <p style="font-size:0.9em; color:#999; border-top:1px solid #eee; margin-top:5px; padding-top:5px;">수당:${item.calcIncome.toLocaleString()} / 기타:${item.extraIncome.toLocaleString()} / 지출:${item.expense.toLocaleString()}</p>
+                        <p><span class="detail-label">정산일:</span> ${item.saleDate}</p>
+                        <p><span class="detail-label">세부:</span> 수당 ${item.calcIncome.toLocaleString()} / 기타 ${item.extraIncome.toLocaleString()} / 지출 ${item.expense.toLocaleString()}</p>
                         <button onclick="deleteData('${month}', ${item.id}, renderSales)" style="color:var(--danger); border:none; background:none; font-size:0.8em; margin-top:10px;">삭제</button>
                     </div>
                 </div>`;
@@ -199,21 +374,57 @@
         drawChart();
     }
 
-    // [기타 기능 함수들은 v7.5와 동일]
+    // --- 설정 관련 기능 ---
+    function saveSettingBase() {
+        myBase = parseFloat(document.getElementById('setBase').value);
+        localStorage.setItem('myBase', JSON.stringify(myBase));
+        alert("계수가 변경되었습니다.");
+    }
+
+    function addNewModel() {
+        const b = document.getElementById('newBrand').value;
+        const n = document.getElementById('newModel').value.trim();
+        const r = parseFloat(document.getElementById('newRate').value);
+        if(!n || isNaN(r)) return alert("차종명과 요율을 정확히 입력하세요.");
+
+        if(b === 'H') myH.push({n, r}); else myK.push({n, r});
+        localStorage.setItem('myH', JSON.stringify(myH));
+        localStorage.setItem('myK', JSON.stringify(myK));
+        alert("차종 요율이 추가되었습니다.");
+        document.getElementById('newModel').value = "";
+        document.getElementById('newRate').value = "";
+        renderModelSetting();
+    }
+
+    function renderModelSetting() {
+        const area = document.getElementById('modelListArea');
+        area.innerHTML = "<strong>현재 등록된 요율표</strong><br>";
+        myH.forEach((m, idx) => {
+            area.innerHTML += `[현대] ${m.n}: ${m.r} <span style="color:red" onclick="delModel('H', ${idx})">✕</span> | `;
+        });
+        myK.forEach((m, idx) => {
+            area.innerHTML += `[기아] ${m.n}: ${m.r} <span style="color:red" onclick="delModel('K', ${idx})">✕</span> | `;
+        });
+    }
+
+    function delModel(brand, idx) {
+        if(brand === 'H') myH.splice(idx, 1); else myK.splice(idx, 1);
+        localStorage.setItem('myH', JSON.stringify(myH));
+        localStorage.setItem('myK', JSON.stringify(myK));
+        renderModelSetting();
+    }
+
+    // --- 유틸리티 ---
     function toggleDetail(id) { const el = document.getElementById(`detail-${id}`); if(el) el.classList.toggle('active'); }
-    function saveConsult() { const name = document.getElementById('cName').value.trim(); if(!name) return alert("고객명 입력!"); const data = { id: Date.now(), brand: currentBrand, name, date: document.getElementById('cDate').value, model: document.getElementById('cModel').value, note: document.getElementById('cNote').value, service: document.getElementById('cService').value, status: '진행중' }; let list = JSON.parse(localStorage.getItem('consultData') || "[]"); list.push(data); localStorage.setItem('consultData', JSON.stringify(list)); alert("상담 저장 완료"); clearConsultForm(); renderConsult(); }
-    function moveToContract(id) { event.stopPropagation(); let cList = JSON.parse(localStorage.getItem('consultData') || "[]"); const item = cList.find(i => i.id === id); if(confirm(`[${item.name}] 계약 이동?`)) { let kList = JSON.parse(localStorage.getItem('contractData') || "[]"); item.status = '계약중'; kList.push(item); localStorage.setItem('contractData', JSON.stringify(kList)); localStorage.setItem('consultData', JSON.stringify(cList.filter(i => i.id !== id))); renderConsult(); renderContract(); showTab('contract'); } }
-    function openFinalInput(id) { event.stopPropagation(); const list = JSON.parse(localStorage.getItem('contractData') || "[]"); tempContract = list.find(i => i.id === id); showTab('sales'); document.getElementById('salesFinalInput').classList.remove('hidden'); document.getElementById('sTargetName').innerText = `고객: ${tempContract.name}`; document.getElementById('sKiaRatioArea').style.display = (tempContract.brand==='K') ? 'block' : 'none'; autoCalcSales(); }
-    function autoCalcSales() { if(!tempContract) return; const price = parseFloat(document.getElementById('sPrice').value) || 0; const models = tempContract.brand === 'H' ? hyundaiModels : kiaModels; const found = models.find(m => m.n === tempContract.model) || {r: 0.05}; let val = 0; if(tempContract.brand === 'H') val = (price / 1.15863) * found.r * 0.7 * 0.967; else val = (price / 1.15863) * found.r * parseFloat(document.getElementById('sKiaRatio').value) * 0.967; document.getElementById('sCalc').value = Math.floor(val); }
-    function completeFinalSale() { const monthKey = document.getElementById('viewMonth').value; const calcVal = parseInt(document.getElementById('sCalc').value) || 0; const extraVal = parseInt(document.getElementById('sExtra').value) || 0; const expVal = parseInt(document.getElementById('sExp').value) || 0; const record = { ...tempContract, status: '판매완료', finalNet: calcVal + extraVal - expVal, calcIncome: calcVal, extraIncome: extraVal, expense: expVal, saleDate: new Date().toLocaleDateString() }; let sList = JSON.parse(localStorage.getItem(monthKey) || "[]"); sList.push(record); localStorage.setItem(monthKey, JSON.stringify(sList)); let kList = JSON.parse(localStorage.getItem('contractData') || "[]").filter(i => i.id !== tempContract.id); localStorage.setItem('contractData', JSON.stringify(kList)); alert("실적 등록 완료!"); cancelFinalSale(); renderContract(); renderSales(); }
-    function cancelFinalSale() { tempContract = null; document.getElementById('salesFinalInput').classList.add('hidden'); document.getElementById('sPrice').value = ""; }
-    function deleteData(key, id, callback) { event.stopPropagation(); if(confirm("삭제?")) { let list = JSON.parse(localStorage.getItem(key) || "[]").filter(i => i.id !== id); localStorage.setItem(key, JSON.stringify(list)); callback(); } }
-    function clearConsultForm() { document.getElementById('cName').value = ""; document.getElementById('cModel').value = ""; document.getElementById('cNote').value = ""; document.getElementById('cService').value = ""; }
-    function drawChart() { const months = []; const now = new Date(); for(let i=5; i>=0; i--) { let d = new Date(now.getFullYear(), now.getMonth()-i, 1); months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`); } const chartData = [['Month', '수입']]; months.forEach(m => { const d = JSON.parse(localStorage.getItem(m) || "[]"); chartData.push([m.split('-')[1]+'월', d.reduce((a, c) => a + c.finalNet, 0)]); }); if(document.getElementById('chart_div')) new google.visualization.LineChart(document.getElementById('chart_div')).draw(google.visualization.arrayToDataTable(chartData), { curveType:'function', legend:'none', chartArea:{width:'85%',height:'70%'} }); }
+    function deleteData(key, id, callback) { event.stopPropagation(); if(confirm("삭제하시겠습니까?")) { let list = JSON.parse(localStorage.getItem(key) || "[]").filter(i => i.id !== id); localStorage.setItem(key, JSON.stringify(list)); callback(); } }
     function initMonthSelector() { const sel = document.getElementById('viewMonth'); const now = new Date(); for (let i = 0; i < 12; i++) { let d = new Date(now.getFullYear(), now.getMonth() - i, 1); let k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; sel.add(new Option(`${d.getFullYear()}년 ${d.getMonth() + 1}월`, k)); } }
-    function copyToClipboard() { const allData = {}; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); allData[key] = localStorage.getItem(key); } const textData = JSON.stringify(allData); const textArea = document.createElement("textarea"); textArea.value = textData; document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); alert("복사 완료! 카톡에 보관하세요."); document.body.removeChild(textArea); }
-    function importData() { const jsonText = prompt("데이터 텍스트를 붙여넣으세요."); if (jsonText) { try { const data = JSON.parse(jsonText); if(confirm("복원하시겠습니까?")) { localStorage.clear(); for (const key in data) { localStorage.setItem(key, data[key]); } alert("복원 완료!"); location.reload(); } } catch (e) { alert("형식 오류"); } } }
-    function exportData() { const month = document.getElementById('viewMonth').value; const data = JSON.parse(localStorage.getItem(month) || "[]"); if(data.length === 0) return alert("데이터 없음"); let csv = "\ufeff고객명,차종,수익,수당,기타,영업비,날짜,특이사항\n"; data.forEach(item => { csv += `${item.name},${item.model},${item.finalNet},${item.calcIncome},${item.extraIncome},${item.expense},${item.saleDate},"${item.note}"\n`; }); const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `실적_${month}.csv`; link.click(); }
+    function drawChart() {
+        const months = []; const now = new Date(); for(let i=3; i>=0; i--) { let d = new Date(now.getFullYear(), now.getMonth()-i, 1); months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`); }
+        const chartData = [['Month', '수입']]; months.forEach(m => { const d = JSON.parse(localStorage.getItem(m) || "[]"); chartData.push([m.split('-')[1]+'월', d.reduce((a, c) => a + c.finalNet, 0)]); });
+        new google.visualization.LineChart(document.getElementById('chart_div')).draw(google.visualization.arrayToDataTable(chartData), { legend:'none', chartArea:{width:'85%',height:'70%'} });
+    }
+    function copyToClipboard() { const allData = {}; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); allData[key] = localStorage.getItem(key); } const textArea = document.createElement("textarea"); textArea.value = JSON.stringify(allData); document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); alert("복사 완료!"); document.body.removeChild(textArea); }
+    function exportData() { const month = document.getElementById('viewMonth').value; const data = JSON.parse(localStorage.getItem(month) || "[]"); if(data.length === 0) return alert("데이터 없음"); let csv = "\ufeff고객명,차종,수익,날짜\n"; data.forEach(item => { csv += `${item.name},${item.model},${item.finalNet},${item.saleDate}\n`; }); const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `실적_${month}.csv`; link.click(); }
 </script>
 </body>
 </html>
