@@ -14,7 +14,6 @@
         .nav-btn { flex: 1; padding: 12px; border: none; background: none; font-weight: bold; border-radius: 10px; cursor: pointer; color: #999; font-size: 0.85em; }
         .nav-btn.active { background: var(--hyundai); color: white; }
 
-        /* 백업 버튼 전용 */
         .backup-bar { display: flex; gap: 5px; margin-bottom: 15px; }
         .btn-backup { flex: 1; padding: 8px; background: #555; color: white; border: none; border-radius: 8px; font-size: 0.75em; font-weight: bold; }
 
@@ -31,11 +30,11 @@
 
         .item { padding: 12px 0; border-bottom: 1px solid #eee; cursor: pointer; }
         .badge { font-size: 0.7em; padding: 2px 5px; border-radius: 4px; color: white; margin-right: 5px; }
-        .st-진행중 { background: #ff9800; } .st-계약 { background: #6f42c1; } .st-완료 { background: var(--success); } .st-실패 { background: var(--danger); }
+        .st-진행중 { background: #ff9800; } .st-계약 { background: #6f42c1; } .st-완료 { background: var(--success); }
        
-        .detail-view { background: #f9f9f9; padding: 10px; border-radius: 8px; margin-top: 5px; font-size: 0.85em; display: none; border: 1px solid #eee; }
+        .detail-view { background: #f9f9f9; padding: 12px; border-radius: 8px; margin-top: 5px; font-size: 0.85em; display: none; border: 1px solid #eee; line-height: 1.5; }
         .detail-view.active { display: block; }
-        .detail-label { color: var(--accent); font-weight: bold; margin-right: 5px; }
+        .detail-label { color: var(--accent); font-weight: bold; margin-right: 5px; display: inline-block; width: 65px; }
 
         .history-list { max-height: 450px; overflow-y: auto; }
         .hidden { display: none; }
@@ -46,7 +45,7 @@
 <div class="container">
     <div class="backup-bar">
         <button class="btn-backup" onclick="exportData()">엑셀(CSV) 저장</button>
-        <button class="btn-backup" onclick="copyToClipboard()">전체데이터 복사(카톡 보관용)</button>
+        <button class="btn-backup" onclick="copyToClipboard()">전체데이터 복사</button>
         <button class="btn-backup" style="background:var(--danger)" onclick="importData()">데이터 복원</button>
     </div>
 
@@ -65,7 +64,7 @@
             </div>
             <input type="text" id="cName" placeholder="고객명">
             <input type="date" id="cDate">
-            <input type="text" id="cModel" placeholder="차종 (예: 그랜저)">
+            <input type="text" id="cModel" placeholder="차종">
             <textarea id="cNote" placeholder="특이사항" rows="2"></textarea>
             <textarea id="cService" placeholder="서비스 내용" rows="2"></textarea>
             <button class="btn-main" onclick="saveConsult()">상담 내역 저장</button>
@@ -118,7 +117,6 @@
 </div>
 
 <script>
-    /* [기존 로직 유지 영역] */
     let currentBrand = 'H'; let tempContract = null;
     const hyundaiModels = [{n:'아반떼', r:0.07}, {n:'쏘나타', r:0.06}, {n:'베뉴', r:0.068}, {n:'코나', r:0.058}, {n:'투싼', r:0.055}, {n:'싼타페', r:0.053}, {n:'그랜저', r:0.05}, {n:'팰리세이드', r:0.048}, {n:'팰리세이드 HEV', r:0.046}, {n:'G70', r:0.047}, {n:'GV70/G80', r:0.043}, {n:'GV80', r:0.041}, {n:'G90', r:0.035}, {n:'G90 리무진', r:0.032}];
     const kiaModels = [{n:'모닝', r:0.075}, {n:'레이', r:0.075}, {n:'K3', r:0.07}, {n:'K5', r:0.06}, {n:'K8', r:0.05}, {n:'K9', r:0.043}, {n:'셀토스', r:0.055}, {n:'스포티지', r:0.055}, {n:'쏘렌토', r:0.055}, {n:'니로HEV', r:0.06}, {n:'카니발', r:0.06}];
@@ -128,87 +126,94 @@
     function showTab(type) { ['Consult', 'Contract', 'Sales'].forEach(t => { document.getElementById('tab'+t).classList.toggle('hidden', type.toLowerCase() !== t.toLowerCase()); document.getElementById('nav'+t).classList.toggle('active', type.toLowerCase() === t.toLowerCase()); }); if(type === 'sales') renderSales(); }
     function setBrand(b) { currentBrand = b; document.getElementById('cBtnH').classList.toggle('active', b==='H'); document.getElementById('cBtnK').classList.toggle('active', b==='K'); }
 
-    // --- 백업 및 복원 핵심 기능 ---
-
-    // 1. 전체 데이터를 텍스트로 복사 (카톡 나에게 보내기 용)
-    function copyToClipboard() {
-        const allData = {};
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            allData[key] = localStorage.getItem(key);
-        }
-        const textData = JSON.stringify(allData);
-       
-        const textArea = document.createElement("textarea");
-        textArea.value = textData;
-        document.body.appendChild(textArea);
-        textArea.select();
-        try {
-            document.execCommand('copy');
-            alert("전체 데이터가 복사되었습니다! \n카카오톡 '나와의 채팅방'에 붙여넣어 보관하세요. \n나중에 이 텍스트를 이용해 복원할 수 있습니다.");
-        } catch (err) {
-            alert("복사 실패. 브라우저 설정을 확인하세요.");
-        }
-        document.body.removeChild(textArea);
+    // 1. 상담 렌더링
+    function renderConsult() {
+        const list = JSON.parse(localStorage.getItem('consultData') || "[]");
+        const listEl = document.getElementById('consultList');
+        listEl.innerHTML = list.length ? "" : "<div style='text-align:center;padding:20px;color:#999'>내역 없음</div>";
+        list.slice().reverse().forEach(item => {
+            listEl.innerHTML += `
+                <div class="item" onclick="toggleDetail('c-${item.id}')">
+                    <div style="display:flex; justify-content:space-between">
+                        <strong>${item.name} (${item.model})</strong>
+                        <span class="badge st-진행중">상담중</span>
+                    </div>
+                    <div id="detail-c-${item.id}" class="detail-view">
+                        <p><span class="detail-label">특이사항:</span> ${item.note || '없음'}</p>
+                        <p><span class="detail-label">서비스:</span> ${item.service || '없음'}</p>
+                        <button class="btn-main" style="padding:8px; font-size:0.8em; margin-top:10px;" onclick="moveToContract(${item.id})">계약 전환</button>
+                        <button onclick="deleteData('consultData', ${item.id}, renderConsult)" style="color:var(--danger); border:none; background:none; font-size:0.8em; float:right; margin-top:15px;">삭제</button>
+                    </div>
+                </div>`;
+        });
     }
 
-    // 2. 텍스트 데이터를 입력하여 복원
-    function importData() {
-        const jsonText = prompt("복사해두었던 데이터 텍스트를 붙여넣으세요.");
-        if (jsonText) {
-            try {
-                const data = JSON.parse(jsonText);
-                if(confirm("기존 데이터가 모두 삭제되고 복원됩니다. 계속할까요?")) {
-                    localStorage.clear();
-                    for (const key in data) {
-                        localStorage.setItem(key, data[key]);
-                    }
-                    alert("데이터 복원이 완료되었습니다!");
-                    location.reload();
-                }
-            } catch (e) {
-                alert("유효한 데이터 형식이 아닙니다.");
-            }
-        }
+    // 2. 계약 렌더링 (수정 핵심 부분)
+    function renderContract() {
+        const list = JSON.parse(localStorage.getItem('contractData') || "[]");
+        const listEl = document.getElementById('contractList');
+        listEl.innerHTML = list.length ? "" : "<div style='text-align:center;padding:20px;color:#999'>계약 내역 없음</div>";
+        list.slice().reverse().forEach(item => {
+            listEl.innerHTML += `
+                <div class="item" onclick="toggleDetail('k-${item.id}')">
+                    <div style="display:flex; justify-content:space-between">
+                        <strong>${item.name} (${item.model})</strong>
+                        <span class="badge st-계약">계약중</span>
+                    </div>
+                    <div id="detail-k-${item.id}" class="detail-view">
+                        <p><span class="detail-label">브랜드:</span> ${item.brand==='H'?'현대':'기아'}</p>
+                        <p><span class="detail-label">특이사항:</span> ${item.note || '없음'}</p>
+                        <p><span class="detail-label">서비스:</span> ${item.service || '없음'}</p>
+                        <button class="btn-main" style="padding:8px; font-size:0.8em; background:var(--success); margin-top:10px;" onclick="openFinalInput(${item.id})">판매완료(실적연동)</button>
+                        <button onclick="deleteData('contractData', ${item.id}, renderContract)" style="color:var(--danger); border:none; background:none; font-size:0.8em; float:right; margin-top:15px;">삭제</button>
+                    </div>
+                </div>`;
+        });
     }
 
-    // 3. 엑셀(CSV) 파일로 내보내기 (PC 및 아이폰 파일앱 저장용)
-    function exportData() {
+    // 3. 판매실적 렌더링
+    function renderSales() {
         const month = document.getElementById('viewMonth').value;
         const data = JSON.parse(localStorage.getItem(month) || "[]");
-        if(data.length === 0) return alert("내보낼 데이터가 없습니다.");
-
-        let csv = "\ufeff고객명,차종,최종수익,수당,기타수입,영업비,날짜,특이사항\n";
-        data.forEach(item => {
-            csv += `${item.name},${item.model},${item.finalNet},${item.calcIncome},${item.extraIncome},${item.expense},${item.saleDate},"${item.note.replace(/"/g, '""')}"\n`;
+        let totalNet = 0;
+        const listEl = document.getElementById('salesList');
+        listEl.innerHTML = data.length ? "" : "<div style='text-align:center;padding:20px;color:#999'>실적 없음</div>";
+        data.slice().reverse().forEach(item => {
+            totalNet += item.finalNet;
+            listEl.innerHTML += `
+                <div class="item" onclick="toggleDetail('s-${item.id}')">
+                    <div style="display:flex; justify-content:space-between">
+                        <strong>${item.name} (${item.model})</strong>
+                        <strong>${item.finalNet.toLocaleString()}원</strong>
+                    </div>
+                    <div id="detail-s-${item.id}" class="detail-view">
+                        <p><span class="detail-label">특이사항:</span> ${item.note || '없음'}</p>
+                        <p><span class="detail-label">서비스:</span> ${item.service || '없음'}</p>
+                        <p style="font-size:0.9em; color:#999; border-top:1px solid #eee; margin-top:5px; padding-top:5px;">수당:${item.calcIncome.toLocaleString()} / 기타:${item.extraIncome.toLocaleString()} / 지출:${item.expense.toLocaleString()}</p>
+                        <button onclick="deleteData('${month}', ${item.id}, renderSales)" style="color:var(--danger); border:none; background:none; font-size:0.8em; margin-top:10px;">삭제</button>
+                    </div>
+                </div>`;
         });
-
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `영업장부_${month}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        document.getElementById('totalCount').innerText = data.length;
+        document.getElementById('totalIncome').innerText = totalNet.toLocaleString();
+        drawChart();
     }
 
-    /* [이하 기존 렌더링 및 저장 로직 동일] */
+    // [기타 기능 함수들은 v7.5와 동일]
+    function toggleDetail(id) { const el = document.getElementById(`detail-${id}`); if(el) el.classList.toggle('active'); }
     function saveConsult() { const name = document.getElementById('cName').value.trim(); if(!name) return alert("고객명 입력!"); const data = { id: Date.now(), brand: currentBrand, name, date: document.getElementById('cDate').value, model: document.getElementById('cModel').value, note: document.getElementById('cNote').value, service: document.getElementById('cService').value, status: '진행중' }; let list = JSON.parse(localStorage.getItem('consultData') || "[]"); list.push(data); localStorage.setItem('consultData', JSON.stringify(list)); alert("상담 저장 완료"); clearConsultForm(); renderConsult(); }
-    function renderConsult() { const list = JSON.parse(localStorage.getItem('consultData') || "[]"); const listEl = document.getElementById('consultList'); listEl.innerHTML = list.length ? "" : "<div style='text-align:center;padding:20px;color:#999'>내역 없음</div>"; list.slice().reverse().forEach(item => { listEl.innerHTML += `<div class="item" onclick="toggleDetail('c-${item.id}')"><div style="display:flex; justify-content:space-between"><strong>${item.name} (${item.model})</strong><span class="badge st-진행중">상담중</span></div><div id="detail-c-${item.id}" class="detail-view"><p><span class="detail-label">메모:</span> ${item.note}</p><button class="btn-main" style="padding:8px; font-size:0.8em; margin-top:5px;" onclick="moveToContract(${item.id})">계약 전환</button><button onclick="deleteData('consultData', ${item.id}, renderConsult)" style="color:var(--danger); border:none; background:none; font-size:0.8em; float:right;">삭제</button></div></div>`; }); }
     function moveToContract(id) { event.stopPropagation(); let cList = JSON.parse(localStorage.getItem('consultData') || "[]"); const item = cList.find(i => i.id === id); if(confirm(`[${item.name}] 계약 이동?`)) { let kList = JSON.parse(localStorage.getItem('contractData') || "[]"); item.status = '계약중'; kList.push(item); localStorage.setItem('contractData', JSON.stringify(kList)); localStorage.setItem('consultData', JSON.stringify(cList.filter(i => i.id !== id))); renderConsult(); renderContract(); showTab('contract'); } }
-    function renderContract() { const list = JSON.parse(localStorage.getItem('contractData') || "[]"); const listEl = document.getElementById('contractList'); listEl.innerHTML = list.length ? "" : "<div style='text-align:center;padding:20px;color:#999'>계약 없음</div>"; list.slice().reverse().forEach(item => { listEl.innerHTML += `<div class="item" onclick="toggleDetail('k-${item.id}')"><div style="display:flex; justify-content:space-between"><strong>${item.name} (${item.model})</strong><span class="badge st-계약">계약중</span></div><div id="detail-k-${item.id}" class="detail-view"><p>${item.note}</p><button class="btn-main" style="padding:8px; font-size:0.8em; background:var(--success)" onclick="openFinalInput(${item.id})">판매완료(실적연동)</button><button onclick="deleteData('contractData', ${item.id}, renderContract)" style="color:var(--danger); border:none; background:none; font-size:0.8em; float:right;">삭제</button></div></div>`; }); }
     function openFinalInput(id) { event.stopPropagation(); const list = JSON.parse(localStorage.getItem('contractData') || "[]"); tempContract = list.find(i => i.id === id); showTab('sales'); document.getElementById('salesFinalInput').classList.remove('hidden'); document.getElementById('sTargetName').innerText = `고객: ${tempContract.name}`; document.getElementById('sKiaRatioArea').style.display = (tempContract.brand==='K') ? 'block' : 'none'; autoCalcSales(); }
     function autoCalcSales() { if(!tempContract) return; const price = parseFloat(document.getElementById('sPrice').value) || 0; const models = tempContract.brand === 'H' ? hyundaiModels : kiaModels; const found = models.find(m => m.n === tempContract.model) || {r: 0.05}; let val = 0; if(tempContract.brand === 'H') val = (price / 1.15863) * found.r * 0.7 * 0.967; else val = (price / 1.15863) * found.r * parseFloat(document.getElementById('sKiaRatio').value) * 0.967; document.getElementById('sCalc').value = Math.floor(val); }
     function completeFinalSale() { const monthKey = document.getElementById('viewMonth').value; const calcVal = parseInt(document.getElementById('sCalc').value) || 0; const extraVal = parseInt(document.getElementById('sExtra').value) || 0; const expVal = parseInt(document.getElementById('sExp').value) || 0; const record = { ...tempContract, status: '판매완료', finalNet: calcVal + extraVal - expVal, calcIncome: calcVal, extraIncome: extraVal, expense: expVal, saleDate: new Date().toLocaleDateString() }; let sList = JSON.parse(localStorage.getItem(monthKey) || "[]"); sList.push(record); localStorage.setItem(monthKey, JSON.stringify(sList)); let kList = JSON.parse(localStorage.getItem('contractData') || "[]").filter(i => i.id !== tempContract.id); localStorage.setItem('contractData', JSON.stringify(kList)); alert("실적 등록 완료!"); cancelFinalSale(); renderContract(); renderSales(); }
     function cancelFinalSale() { tempContract = null; document.getElementById('salesFinalInput').classList.add('hidden'); document.getElementById('sPrice').value = ""; }
-    function renderSales() { const month = document.getElementById('viewMonth').value; const data = JSON.parse(localStorage.getItem(month) || "[]"); let totalNet = 0; const listEl = document.getElementById('salesList'); listEl.innerHTML = data.length ? "" : "<div style='text-align:center;padding:20px;color:#999'>실적 없음</div>"; data.slice().reverse().forEach(item => { totalNet += item.finalNet; listEl.innerHTML += `<div class="item" onclick="toggleDetail('s-${item.id}')"><div style="display:flex; justify-content:space-between"><strong>${item.name} (${item.model})</strong><strong>${item.finalNet.toLocaleString()}원</strong></div><div id="detail-s-${item.id}" class="detail-view"><p>특이사항: ${item.note}</p><p>수당:${item.calcIncome.toLocaleString()} / 지출:${item.expense.toLocaleString()}</p><button onclick="deleteData('${month}', ${item.id}, renderSales)" style="color:var(--danger); border:none; background:none; font-size:0.8em;">삭제</button></div></div>`; }); document.getElementById('totalCount').innerText = data.length; document.getElementById('totalIncome').innerText = totalNet.toLocaleString(); drawChart(); }
-    function toggleDetail(id) { const el = document.getElementById(`detail-${id}`); if(el) el.classList.toggle('active'); }
     function deleteData(key, id, callback) { event.stopPropagation(); if(confirm("삭제?")) { let list = JSON.parse(localStorage.getItem(key) || "[]").filter(i => i.id !== id); localStorage.setItem(key, JSON.stringify(list)); callback(); } }
     function clearConsultForm() { document.getElementById('cName').value = ""; document.getElementById('cModel').value = ""; document.getElementById('cNote').value = ""; document.getElementById('cService').value = ""; }
-    function drawChart() { const months = []; const now = new Date(); for(let i=5; i>=0; i--) { let d = new Date(now.getFullYear(), now.getMonth()-i, 1); months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`); } const chartData = [['Month', '수입']]; months.forEach(m => { const d = JSON.parse(localStorage.getItem(m) || "[]"); chartData.push([m.split('-')[1]+'월', d.reduce((a, c) => a + c.finalNet, 0)]); }); new google.visualization.LineChart(document.getElementById('chart_div')).draw(google.visualization.arrayToDataTable(chartData), { curveType:'function', legend:'none', chartArea:{width:'85%',height:'70%'} }); }
+    function drawChart() { const months = []; const now = new Date(); for(let i=5; i>=0; i--) { let d = new Date(now.getFullYear(), now.getMonth()-i, 1); months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`); } const chartData = [['Month', '수입']]; months.forEach(m => { const d = JSON.parse(localStorage.getItem(m) || "[]"); chartData.push([m.split('-')[1]+'월', d.reduce((a, c) => a + c.finalNet, 0)]); }); if(document.getElementById('chart_div')) new google.visualization.LineChart(document.getElementById('chart_div')).draw(google.visualization.arrayToDataTable(chartData), { curveType:'function', legend:'none', chartArea:{width:'85%',height:'70%'} }); }
     function initMonthSelector() { const sel = document.getElementById('viewMonth'); const now = new Date(); for (let i = 0; i < 12; i++) { let d = new Date(now.getFullYear(), now.getMonth() - i, 1); let k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; sel.add(new Option(`${d.getFullYear()}년 ${d.getMonth() + 1}월`, k)); } }
+    function copyToClipboard() { const allData = {}; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); allData[key] = localStorage.getItem(key); } const textData = JSON.stringify(allData); const textArea = document.createElement("textarea"); textArea.value = textData; document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); alert("복사 완료! 카톡에 보관하세요."); document.body.removeChild(textArea); }
+    function importData() { const jsonText = prompt("데이터 텍스트를 붙여넣으세요."); if (jsonText) { try { const data = JSON.parse(jsonText); if(confirm("복원하시겠습니까?")) { localStorage.clear(); for (const key in data) { localStorage.setItem(key, data[key]); } alert("복원 완료!"); location.reload(); } } catch (e) { alert("형식 오류"); } } }
+    function exportData() { const month = document.getElementById('viewMonth').value; const data = JSON.parse(localStorage.getItem(month) || "[]"); if(data.length === 0) return alert("데이터 없음"); let csv = "\ufeff고객명,차종,수익,수당,기타,영업비,날짜,특이사항\n"; data.forEach(item => { csv += `${item.name},${item.model},${item.finalNet},${item.calcIncome},${item.extraIncome},${item.expense},${item.saleDate},"${item.note}"\n`; }); const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `실적_${month}.csv`; link.click(); }
 </script>
 </body>
 </html>
