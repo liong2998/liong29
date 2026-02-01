@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>현대/제네시스 영업지원</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .brand-genesis { background-color: #212121; color: #d1b695; }
+        .brand-hyundai { background-color: #002c5f; color: white; }
+        .card { border-radius: 12px; transition: transform 0.2s; }
+        .card:active { transform: scale(0.95); }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <div id="main-screen" class="p-6 space-y-6">
+        <h1 class="text-2xl font-bold text-center my-8 text-gray-800">영업 지원 카탈로그</h1>
+        
+        <div onclick="showBrand('genesis')" class="brand-genesis p-10 card text-center text-2xl font-black shadow-xl cursor-pointer">
+            GENESIS
+        </div>
+        
+        <div onclick="showBrand('hyundai')" class="brand-hyundai p-10 card text-center text-2xl font-black shadow-xl cursor-pointer">
+            HYUNDAI
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-500">
+            <p class="font-bold text-lg mb-2">내 명함 공유하기</p>
+            <button onclick="shareContact()" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold">카카오톡/문자 공유</button>
+        </div>
+    </div>
+
+    <div id="list-screen" class="hidden p-4">
+        <button onclick="goBack()" class="mb-4 text-blue-600 font-bold">← 뒤로가기</button>
+        <h2 id="brand-title" class="text-xl font-bold mb-4 text-center"></h2>
+        <div id="car-list" class="grid grid-cols-2 gap-4">
+            </div>
+        
+        <div class="mt-8 border-t pt-4">
+            <button id="estimate-link" onclick="openEstimate()" class="w-full py-4 bg-gray-800 text-white rounded-lg font-bold text-center">
+                공식 홈페이지 견적내기 ↗
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const data = {
+            genesis: {
+                title: "GENESIS LINEUP",
+                cars: ["G70", "G80", "G90", "GV70", "GV80"],
+                link: "https://www.genesis.com/kr/ko/view-delivery/estimate/models.html"
+            },
+            hyundai: {
+                title: "HYUNDAI LINEUP",
+                cars: ["아반떼", "쏘나타", "그랜저", "베뉴", "코나", "투싼", "싼타페", "팰리세이드", "포터", "스타리아"],
+                link: "https://www.hyundai.com/kr/ko/e/vehicles/build-your-own"
+            }
+        };
+
+        let currentBrand = '';
+
+        function showBrand(brand) {
+            currentBrand = brand;
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('list-screen').classList.remove('hidden');
+            document.getElementById('brand-title').innerText = data[brand].title;
+            
+            const listDiv = document.getElementById('car-list');
+            listDiv.innerHTML = '';
+            
+            data[brand].cars.forEach(car => {
+                const btn = document.createElement('div');
+                btn.className = "bg-white p-6 text-center shadow rounded-lg font-bold border hover:bg-gray-50";
+                btn.innerText = car;
+                // 상세 페이지 연결 (현대차 공식 페이지의 검색 결과로 연결되게 설정)
+                btn.onclick = () => window.open(`https://www.hyundai.com/kr/ko/e/search?searchKeyword=${car}`);
+                listDiv.appendChild(btn);
+            });
+        }
+
+        function goBack() {
+            document.getElementById('main-screen').classList.remove('hidden');
+            document.getElementById('list-screen').classList.add('hidden');
+        }
+
+        function openEstimate() {
+            window.open(data[currentBrand].link);
+        }
+
+        function shareContact() {
+            // 실제 영업사원님의 정보를 아래에 기입하세요
+            const name = "홍길동 카마스터";
+            const phone = "010-1234-5678";
+            const text = `안녕하세요! 현대자동차 ${name}입니다. 상담이 필요하시면 언제든 연락주세요.\n전화: ${phone}`;
+            
+            if (navigator.share) {
+                navigator.share({ title: '명함 공유', text: text });
+            } else {
+                alert("복사되었습니다: " + text);
+            }
+        }
+    </script>
+</body>
+</html>
